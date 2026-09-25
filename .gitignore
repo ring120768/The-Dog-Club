@@ -24,3 +24,6 @@ coverage/
 *.log
 
 .data/
+
+# Supabase CLI local cache
+supabase/.temp/

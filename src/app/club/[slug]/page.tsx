@@ -101,6 +101,7 @@ export default async function ClubPage({
                   Edit profile <ArrowUpRight size={16} />
                 </Link>
               </div>
+              <Link className="public-link" href={`/club/${slug}/applications/${dog.id}`}>Grooming application →</Link>
               {dog.audience === "public" && (
                 <Link className="public-link" href={`/p/${slug}/${dog.id}`}>
                   Open public profile ↗
