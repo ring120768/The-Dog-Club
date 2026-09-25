@@ -22,3 +22,5 @@ coverage/
 # Local files
 .DS_Store
 *.log
+
+.data/

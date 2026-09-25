@@ -98,4 +98,14 @@ Review draft GA01, GA02, A15 and A22 with operator/designer. Confirm wash/dry se
 
 Completed: competitor research, four-page drawing review, detailed feature PRD, white-label product specification and gated build backlog. No application code, live provider connections, accounts, charges, payroll submissions or deployments have been created for this product.
 
-Next execution milestone: independent project foundation, tenant isolation, branding and the member/dog profile slice. Resolve permanent project location before creating the repository; do not build into the RoundMate app.
+Next execution milestone: independent project foundation, tenant isolation, branding and the member/dog profile slice. Project location is confirmed as `/Users/ianring/Documents/ChatGPT/The Dog club`, connected to `ring120768/The-Dog-Club`. Build here using separate infrastructure.
+
+
+## Implementation checkpoint — 25/09/2026
+
+First local web increment implemented. See [project status](PROJECT_STATUS.md) and [verification evidence](VERIFICATION.md). Stage 1 remains in progress: operator onboarding, production identity/datastore and location/resource configuration are outstanding. Stage 2 has an initial web dog-profile slice; photo storage and iOS/Android clients are not implemented.
+
+
+### Photo increment — 25/09/2026
+
+Local profile photo upload, replacement/removal and audience-based image access are implemented and verified. See [photo design](PHOTO_UPLOADS.md). The earlier photo-storage gap is now limited to managed production storage; native clients and operator onboarding remain outstanding.
