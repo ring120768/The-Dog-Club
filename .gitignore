@@ -1,0 +1,24 @@
+# Local secrets and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.mobileprovision
+*.jks
+*.keystore
+
+# Dependencies and generated output
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+.expo/
+*.tsbuildinfo
+
+# Local files
+.DS_Store
+*.log
