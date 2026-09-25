@@ -22,7 +22,7 @@ export function InvitationForm({ club }: { club?: string }) {
               <input name="name" required maxLength={80} />
             </label>
             <label>
-              Club address
+              Club web address
               <input
                 name="slug"
                 required
@@ -31,6 +31,9 @@ export function InvitationForm({ club }: { club?: string }) {
                 pattern="[a-z0-9]+(-[a-z0-9]+)*"
                 placeholder="e.g. park-paws"
               />
+              <small>
+                Used in /club/your-club and fixed after the club is created.
+              </small>
             </label>
             <label>
               Location

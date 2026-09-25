@@ -65,6 +65,14 @@ test("new operator and member join, dog is submitted, manager approves, owner se
     emergency_contact: "Test human 07700 900000",
     handling_notes: "None known",
     version: 0,
+    intent: "draft",
+  });
+  assert.equal((await applicationsFor(db, member, club))[0].status, "draft");
+  assert.deepEqual(await applicationsFor(db, operator, club), []);
+  await submitApplication(db, member, club, dog, {
+    emergency_contact: "Test human 07700 900000",
+    handling_notes: "None known",
+    version: 1,
     intent: "submit",
   });
   const a = (await applicationsFor(db, operator, club))[0];
@@ -287,32 +295,32 @@ test("stale decisions fail; suspension, information request and resubmission pre
   await reviewApplication(db, operator, club, dog, {
     status: "suspended",
     reason: "Needs assessment",
-    version: 2,
+    version: 3,
   });
   await assert.rejects(
     submitApplication(db, member, club, dog, {
       emergency_contact: "Test 07700",
       handling_notes: "None known",
-      version: 3,
+      version: 4,
       intent: "submit",
     }),
   );
   await reviewApplication(db, operator, club, dog, {
     status: "needs-information",
     reason: "Please clarify",
-    version: 3,
+    version: 4,
   });
   await submitApplication(db, member, club, dog, {
     emergency_contact: "Test 07700",
     handling_notes: "Clarified",
-    version: 4,
+    version: 5,
     intent: "submit",
   });
   assert.equal((await applicationsFor(db, member, club))[0].status, "pending");
   assert.equal(
     (await db.query("SELECT * FROM application_events WHERE dog_id=$1", [dog]))
       .rows.length,
-    5,
+    6,
   );
 });
 test("simultaneous invitation claims create one account and one grant", async () => {

@@ -20,7 +20,7 @@ Working folder on Ringo's Mac: `~/Documents/ChatGPT/The Dog club` (not `DogClubP
 ## Remaining work
 
 1. Remove local-demo badges and prefilled synthetic credentials from production UI. They remain in deployed code but the synthetic accounts do not exist in the production database.
-2. Set up the first actual club and its manager. The current creation flow requires a registered manager account; only the platform-owner account has been provisioned. Invitations are not implemented.
+2. Review and apply the onboarding migration in a non-production PostgreSQL environment, then merge the stacked logo and onboarding PRs before using invitations with the first actual club. Production still has only the platform-owner account and no clubs.
 3. Resolve the Supabase advisor warning for public.rls_auto_enable(). Effective EXECUTE is inherited from PUBLIC; revoking only anon/authenticated is insufficient. Review and remove the PUBLIC grant as appropriate, retain required administrative access, then verify effective privileges and advisors. See the verification report for the event-trigger caveat.
 4. Replace the initial testing password before real-customer use. Password-change/reset UI is not implemented yet. Do not write credentials into handovers.
 5. Preview has not been connected to the production database. Do not add production credentials to previews casually.
@@ -51,8 +51,10 @@ Branch `codex/onboarding-approval`, stacked on the unmerged logo branch. Impleme
 
 Validation: typecheck and 36 isolated tests pass (8 new onboarding/application tests including full domain journey, expiry/reuse/revocation, existing-account protection, tenant/privacy checks and concurrent claims). New migration exists locally only; production untouched.
 
-Browser walkthrough incomplete: the existing local owner@demo.invalid sign-in was rejected after restart. Diagnose fixture/account/rate-limit state without resetting the local database or exposing password hashes; do not assume its cause. Then complete operator invitation acceptance, member invitation, dog creation/submission and manager decision in the browser. No successful UI end-to-end claim yet.
+Browser walkthrough completed on 25/09/2026. The rejected local sign-in was caused by an older local database that predated the synthetic platform-owner fixture; the account was restored without resetting other demo data. A platform owner then invited a new operator, the operator created the club while accepting, invited a member, the member created Pickle, saved and submitted grooming details, and the manager approved the application. No production records or schema were changed.
+
+The review also keeps grooming drafts private from managers until submission, renames the slug field to “Club web address” and removes stale platform copy that said invitations were still to come. Typecheck, all 36 tests and diff checks pass after these changes.
 
 Review before rollout: application/invitation writes use privileged server transactions with explicit actor checks; restricted roles have read-only application access. Validate that boundary against production role grants. Add request throttling for invitation acceptance before public rollout, stronger care/document coverage and accessible form/pending-state checks. Review potential issuer-permission revocation races, transaction rollback and existing-manager/self-review UX. Test in non-production PostgreSQL before applying the migration. Do not run production schema changes from a preview.
 
-Usage checkpoint triggered at 8% five-hour allowance remaining. Work intentionally remains draft and incomplete pending the browser checks, hardening and migration review above.
+The earlier usage checkpoint preserved this work in draft PR #4. The browser acceptance milestone is now complete; the PR remains draft pending PostgreSQL migration review, rollout hardening and the production/demo presentation work above.

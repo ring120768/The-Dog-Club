@@ -29,8 +29,12 @@ ALTER TABLE application_events FORCE ROW LEVEL SECURITY;
 GRANT SELECT ON dog_applications,application_events TO club_app;
 CREATE POLICY application_read ON dog_applications FOR SELECT TO club_app USING(
  club_id=current_setting('app.club_id',true) AND current_setting('app.public',true)='false' AND EXISTS(
- SELECT 1 FROM memberships m WHERE m.club_id=dog_applications.club_id AND (m.role='manager' OR EXISTS(SELECT 1 FROM dogs d WHERE d.club_id=dog_applications.club_id AND d.id=dog_applications.dog_id AND d.owner_id=m.account_id))));
+ SELECT 1 FROM memberships m WHERE m.club_id=dog_applications.club_id AND (
+  EXISTS(SELECT 1 FROM dogs d WHERE d.club_id=dog_applications.club_id AND d.id=dog_applications.dog_id AND d.owner_id=m.account_id)
+  OR (m.role='manager' AND dog_applications.status<>'draft'))));
 CREATE POLICY application_history_read ON application_events FOR SELECT TO club_app USING(
  club_id=current_setting('app.club_id',true) AND current_setting('app.public',true)='false' AND EXISTS(
- SELECT 1 FROM memberships m WHERE m.club_id=application_events.club_id AND (m.role='manager' OR EXISTS(SELECT 1 FROM dogs d WHERE d.club_id=application_events.club_id AND d.id=application_events.dog_id AND d.owner_id=m.account_id))));
+ SELECT 1 FROM memberships m WHERE m.club_id=application_events.club_id AND (
+  EXISTS(SELECT 1 FROM dogs d WHERE d.club_id=application_events.club_id AND d.id=application_events.dog_id AND d.owner_id=m.account_id)
+  OR (m.role='manager' AND EXISTS(SELECT 1 FROM dog_applications a WHERE a.club_id=application_events.club_id AND a.dog_id=application_events.dog_id AND a.status<>'draft')))));
 -- Writes use narrowly scoped server operations with row locks, actor checks and audit in one transaction.

@@ -1,12 +1,12 @@
 # App review against PRD v0.8
 
-25/09/2026 · Reviewed branch `codex/demo-logo-checkpoint`, commit `23b1362`. Fresh GitHub fetch: branch up to date; PR #3 remains open. Main is `5744bc2`. Logo/copy changes are in the draft PR, not main. Production activation evidence comes from HANDOVER.md and the earlier live verification, not a new live-service audit in this review.
+25/09/2026 · Updated on branch `codex/onboarding-approval`, stacked on `codex/demo-logo-checkpoint`. Fresh GitHub fetch found no incoming changes; draft PR #4 and its checks are current. Main remains `5744bc2`. Logo, copy and onboarding changes are not in production. Production activation evidence comes from HANDOVER.md and the earlier live verification, not a new live-service audit in this review.
 
 ## Assessment
 
-The app is a persisted web foundation and dog-profile slice, not yet the operational membership/grooming/café product specified for the pilot. Stage 1 is incomplete; Stage 2 has partial web implementation. A successful deployment and attractive login do not satisfy the launch gates. No percentage is assigned: requirements differ greatly in size and operational importance.
+The app is a persisted web foundation with dog profiles and a working invitation/grooming-approval slice. It is not yet the operational membership, booking and café product specified for the pilot. Stage 1 remains incomplete; Stage 2 has partial web implementation. A successful deployment and attractive login do not satisfy the launch gates. No percentage is assigned: requirements differ greatly in size and operational importance.
 
-Basis: PRD.md v0.8, ROADMAP.md v0.8, WHITE_LABEL_PLATFORM.md, application routes/components/domain code, migrations, test inventory and handover. This is a requirements/code review, not a fresh full usability, security or native-device audit. The existing 28 passing tests cover isolation/photos and password verification; they do not prove booking, commerce, workforce or onboarding acceptance. No test rerun was needed for this documentation-only review.
+Basis: PRD.md v0.8, ROADMAP.md v0.8, WHITE_LABEL_PLATFORM.md, application routes/components/domain code, migrations, test inventory, local browser acceptance and handover. This is a requirements/code review, not a full security or native-device audit. All 36 tests and the TypeScript check pass; the browser acceptance covers invitation onboarding through a manager grooming decision. It does not prove booking, commerce, workforce or production rollout.
 
 ## Requirement coverage
 
@@ -17,15 +17,15 @@ Partial means a working subset exists; it does not mean the full acceptance crit
 | PL-01, PL-02 | iOS/Android and shared accounts | Native clients missing. Shared web backend exists; cross-device native journeys untested. Responsive web is not the required store release. |
 | PL-03, PL-04 | Mobile media, push, distribution | Web photo upload exists. Native camera/library permissions, push/deep links, store assets/signing and account deletion missing. |
 | PL-05 | Web companion | Partial: responsive member/manager pages and public links. Staff tablet workflows and verified app links incomplete. |
-| AC-01 | Household accounts | Partial: salted passwords, opaque sessions, login throttling and scoped access. No signup, verification, recovery, household/adult invitations or household permission model. |
-| DG-01 | Dog records | Partial: multiple dogs per account; name, breed, bio, illustration, audience and one photo. Size/coat fields, structured sensitivities/handling, emergency contact and documents missing. A private notes table is not the complete care workflow. |
-| DG-02 | Activity eligibility | Missing: review states, reviewer/reason/date, document expiry and activity-specific approval. |
+| AC-01 | Household accounts | Partial: salted passwords, opaque sessions, login throttling, invitation-based account creation and scoped access. No independent email verification, recovery, household/adult invitations or household permission model. |
+| DG-01 | Dog records | Partial: multiple dogs per account; name, breed, bio, illustration, audience, one photo, emergency contact and grooming handling notes. Size/coat fields, broader structured care data and documents remain missing. |
+| DG-02 | Activity eligibility | Partial: grooming-only draft/submission and versioned manager states record reviewer/reason/date. Document expiry and other activities remain missing. |
 | MB-01–03 | Paid membership and benefits | Missing. The current memberships table is an account-to-club role grant, not a subscription or benefit ledger. |
 | BK-01–03 | Grooming appointments | Missing: services, price/consent, resources, availability, concurrency safeguards, change/cancellation/refunds. |
 | VS-01–02 | Visits and collection | Missing: passes, admission/capacity, handover/progress/authorised collection and corrective audit workflow. |
 | FD-01 | Human and dog menus | Missing: separate catalogues, prices, ingredients/allergens and availability. |
-| OP-01, AD-01 | Daily staff/manager workspace | Partial shell: manager can list dogs and restricted care notes. No schedule, arrivals, staffing gaps, payments, task alerts or moderation queue. |
-| AD-02 | Staff administration | Missing invites/deactivation/qualifications and fine-grained operational permissions. Only member/manager club roles plus separate platform-owner grants exist. |
+| OP-01, AD-01 | Daily staff/manager workspace | Partial: manager can list dogs, restricted care details and the submitted grooming approval queue. No schedule, arrivals, staffing gaps, payments, task alerts or moderation queue. |
+| AD-02 | Staff administration | Partial invitation path for an initial operator/manager and members. Deactivation, qualifications and fine-grained operational permissions remain missing. |
 | OP-02 | Cleaning and incidents | Missing, including dog-toilet checks and restricted incident escalation. |
 | NT-01 | Notifications | Missing transactional delivery, reminder/expiry/groom-ready notifications and failure/manual fallback tracking. |
 | RP-01 | Reporting | Missing operational/financial reporting and provider reconciliation. Dog counts are not the specified reporting feature. |
@@ -43,7 +43,7 @@ Partial means a working subset exists; it does not mean the full acceptance crit
 | Configurable UK integrations | Payroll/POS provider choice | Missing connector registry, authorisation, mappings, health, retries and provider-switch validation. Research shortlist is not integration support. |
 | WL-01 | Tenant isolation | Partial acceptance coverage: existing dog/care/photo operations use scoped database roles and negative tests. Exports, queues, integrations and staff/payroll separation cannot pass before those features exist. |
 | WL-02 | Branding/modules | Partial: name/tagline/location label, palette, built-in emblem and illustration tone. Supplied photo is a shared platform logo, not per-operator logo upload. No module registry, server entitlements, domains or full contact/service/policy configuration. |
-| WL-03–04 | Operator setup | Partial: owner console, create club with existing manager, editable branding, config audit and version conflict logic. Missing invitations, draft/activation lifecycle, locations/resources and completed two-operator onboarding evidence. Existing clubs are seeded fixtures. |
+| WL-03–04 | Operator setup | Partial: owner console, private operator invitations, atomic account/club/manager creation, editable branding, config audit and version conflict logic. Missing draft/activation lifecycle, locations/resources and completed two-operator evidence. |
 | WL-05–06 | Commercial accounts/lifecycle | Missing software subscriptions vs merchant receipts, operator states and suspension/closure rules. |
 | WL-07 | Demo separation | Partial: isolated local synthetic seed and production datastore selection. Demo badges and prefilled demo credentials are unconditional in production UI. Production must not be labelled fictional. |
 | WL-08; section 9 | Support and readiness | Partial audit/error handling. No time-limited support access, tenant export/offboarding, tested restore evidence, staff MFA or retention/deletion workflow. Accessibility/performance targets not acceptance-tested. |
@@ -58,12 +58,12 @@ Partial means a working subset exists; it does not mean the full acceptance crit
 - `src/app/club/[slug]/page.tsx`: profile cards and community list; explicitly labels membership/booking/café work as future milestones.
 - `src/app/club/[slug]/operations/page.tsx`: dog/care table; explicitly identifies rotas, clocking, payroll, bookings and integrations as unconnected.
 - `src/lib/branding.ts`, `src/lib/brand-contract.ts`, `src/app/platform/`: existing-account manager assignment and limited branding configuration.
-- `tests/isolation.test.ts`, `tests/photos.test.ts`: 28 tests; no dedicated platform onboarding/branding authorisation or concurrent-editor tests found. OPERATOR_ONBOARDING.md acceptance bullets are desired tests, not evidence they ran; its claim of tested palettes is not substantiated by the test inventory.
+- `tests/onboarding.test.ts`: invitation authority, expiry/revocation/reuse, atomic acceptance, private drafts, tenant isolation, versioned decisions, audit and concurrent claims. Together with isolation/photo tests, all 36 tests pass.
 - `HANDOVER.md`: successful production-owner sign-in, no clubs provisioned at activation, residual security/credential work. `PROJECT_STATUS.md` and old roadmap status paragraphs are stale; do not use them as completion evidence.
 
 ## Highest-priority gaps
 
-1. **No complete new-customer journey.** A prospect cannot register, join, receive approval, pay or book. Operator creation itself requires a manager account that cannot be invited through the app. Finish identity/invitations and tenant setup before selling self-service onboarding.
+1. **Onboarding now works locally but is not production-ready.** A new operator and member can join, create a dog and complete grooming approval without database setup. Independent email verification, recovery, wider care/documents, migration rehearsal and public acceptance throttling remain before rollout; payment and booking are still absent.
 2. **Care and social data need separate workflows.** Preserve the existing public allowlist while introducing household ownership, care fields/documents and activity eligibility. Do not turn the public bio into a substitute care record.
 3. **Community launch needs moderation and lifecycle controls.** Unpublishing works, but reports/blocks and membership-ending behaviour are absent. Keep the pilot closed until those PRD P0 controls are in place.
 4. **Scheduling depends on staffing.** Roadmap Stage 3 requires qualified published shifts, but the rota is placed in Stage 5. Bring minimum qualifications/shifts/breaks/leave into the booking foundation; payroll can remain later. Otherwise early booking would violate BK-01/RO-05.
@@ -74,7 +74,7 @@ Partial means a working subset exists; it does not mean the full acceptance crit
 
 This is a proposed refinement, not an approved reduction in PRD scope.
 
-1. Finish foundation: production/demo presentation, account lifecycle, invited manager/member access, households, staff permissions, configurable location/resource/service inventory. Add direct operator-permission and concurrency tests. Demonstrate two operator setups without SQL/account bootstrapping or code changes.
+1. Finish foundation: production/demo presentation, verified account lifecycle and recovery, households, staff permissions, configurable location/resource/service inventory. Rehearse the migration in non-production PostgreSQL and demonstrate two operator setups without SQL bootstrapping or code changes.
 2. Complete dog/community slice: private care capture and approval, gallery/audience preview/search, moderation/blocking, membership expiry policy; start iOS/Android sign-in/profile/photo path against shared domain contracts.
 3. Build one real operational journey in a test environment: plan/benefit model, qualified staffing availability, conflict-safe grooming request/booking, check-in, handover and collection. Agree operator rules first; label any simulation clearly.
 4. Connect commerce: Stripe test-mode subscriptions/deposits/balances and café sale/refund reconciliation; keep operator software billing separate. Choose and validate one supported counter route.
@@ -87,4 +87,4 @@ Membership unit and tiers/prices; real operator name/address; staffing and indep
 
 ## Conclusion
 
-Ready to demonstrate the visual identity, profiles, audience controls and initial branding configuration with known limitations. Not ready for a paid operational pilot or a claim of complete white-label onboarding. The best next milestone is a new operator and member joining through the product, followed by the first conflict-safe grooming journey—not additional disconnected screens.
+Ready to demonstrate the visual identity, profiles, audience controls, operator/member invitation onboarding and grooming approval with known limitations. Not ready for a paid operational pilot or a claim of complete white-label onboarding. The next milestone is a conflict-safe grooming booking journey built on staffing, services and resources, while production identity and account recovery are completed.
