@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { applicationsFor } from "@/lib/applications";
 import { DogAvatar } from "@/components/dog-avatar";
 import { photoUrl } from "@/lib/photo-contract";
 import { notFound } from "next/navigation";
@@ -17,6 +19,7 @@ export default async function Operations({
   );
   if (!club) notFound();
   const dogs = await dogsFor(db, account.id, club.id);
+  const applications = await applicationsFor(db, account.id, club.id);
   const care = await scoped(
     db,
     account.id,
@@ -36,6 +39,21 @@ export default async function Operations({
       <p className="intro">
         {dogs.length} dog profiles · Access restricted to this club.
       </p>
+      <section>
+        <h2>Grooming approval queue</h2>
+        {applications.length === 0 ? (
+          <p>No applications yet.</p>
+        ) : (
+          applications.map((a) => (
+            <p key={a.dog_id}>
+              <Link href={`/club/${slug}/applications/${a.dog_id}`}>
+                {dogs.find((d) => d.id === a.dog_id)?.name ?? "Dog"} ·{" "}
+                {a.status} →
+              </Link>
+            </p>
+          ))
+        )}
+      </section>
       <div className="table-wrap">
         <table>
           <thead>

@@ -40,3 +40,19 @@ Login hero retains “Their happy place. Yours, too.” The approved supporting 
 Checkpoint validation: TypeScript check and all 28 local tests passed; the local login response contains the original headline, approved supporting line and demo logo. Branch: `codex/demo-logo-checkpoint`. Production merge remains a separate step.
 
 Preview visibility fix: the narrow-screen layout no longer hides the login supporting paragraph. The approved sentence stays visible in the embedded viewing window and on mobile.
+
+## PRD review
+
+See `docs/PRD_REVIEW.md` for the requirement-by-requirement review against v0.8 at commit `23b1362`. Foundation and web profiles are partial delivery, not a completed pilot. Proposed next priority: account/invitation and operator setup, then care/community and staffing-aware booking. Review document is local pending publication; implementation unchanged.
+
+## Onboarding implementation checkpoint
+
+Branch `codex/onboarding-approval`, stacked on the unmerged logo branch. Implements operator/member invitation pages, hashed single-use 72-hour invitations with revocation, existing-account sign-in requirement, atomic account/club/grant acceptance, grooming care applications, private owner/manager reads and versioned manager decisions/audit. Manual link sharing only; no emails sent or email ownership verification claimed. Approval is grooming-only, not booking/payment/admission.
+
+Validation: typecheck and 36 isolated tests pass (8 new onboarding/application tests including full domain journey, expiry/reuse/revocation, existing-account protection, tenant/privacy checks and concurrent claims). New migration exists locally only; production untouched.
+
+Browser walkthrough incomplete: the existing local owner@demo.invalid sign-in was rejected after restart. Diagnose fixture/account/rate-limit state without resetting the local database or exposing password hashes; do not assume its cause. Then complete operator invitation acceptance, member invitation, dog creation/submission and manager decision in the browser. No successful UI end-to-end claim yet.
+
+Review before rollout: application/invitation writes use privileged server transactions with explicit actor checks; restricted roles have read-only application access. Validate that boundary against production role grants. Add request throttling for invitation acceptance before public rollout, stronger care/document coverage and accessible form/pending-state checks. Review potential issuer-permission revocation races, transaction rollback and existing-manager/self-review UX. Test in non-production PostgreSQL before applying the migration. Do not run production schema changes from a preview.
+
+Usage checkpoint triggered at 8% five-hour allowance remaining. Work intentionally remains draft and incomplete pending the browser checks, hardening and migration review above.

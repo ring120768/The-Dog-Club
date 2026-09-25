@@ -44,7 +44,7 @@ export default async function ClubLayout({
               Manager overview
             </Link>
           )}
-          {club.role==="manager"&&<Link href={`/club/${slug}/settings`}>Club branding</Link>}
+          {club.role==="manager"&&<><Link href={`/club/${slug}/settings`}>Club branding</Link><Link href={`/club/${slug}/invitations`}>Invite members</Link></>}
         </nav>
         <div className="sidebar-bottom">
           <p>{club.location}</p>
