@@ -848,7 +848,6 @@ th {
   .login-story h1 {
     font-size: 43px;
   }
-  .login-story p,
   .avatar-pack,
   .story-footer {
     display: none;
@@ -992,4 +991,21 @@ input[type="checkbox"] {
 }
 .manager-dog .dog-avatar svg {
   width: 32px;
+}
+
+/* Preserve the supplied photo and its cream background at every screen size. */
+.demo-logo {
+  display: block;
+  width: 96px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+@media (max-width: 500px) {
+  .demo-logo {
+    width: 72px;
+    height: 54px;
+    border-radius: 10px;
+  }
 }
