@@ -101,7 +101,18 @@ export default async function ClubPage({
                   Edit profile <ArrowUpRight size={16} />
                 </Link>
               </div>
-              <Link className="public-link" href={`/club/${slug}/applications/${dog.id}`}>Grooming application →</Link>
+              <Link
+                className="public-link"
+                href={`/club/${slug}/applications/${dog.id}`}
+              >
+                Grooming application →
+              </Link>
+              <Link
+                className="public-link"
+                href={`/club/${slug}/bookings?dog=${dog.id}`}
+              >
+                Book grooming →
+              </Link>
               {dog.audience === "public" && (
                 <Link className="public-link" href={`/p/${slug}/${dog.id}`}>
                   Open public profile ↗
@@ -150,7 +161,7 @@ export default async function ClubPage({
       <div className="coming-next">
         <span className="eyebrow">GROWING WITH YOUR CLUB</span>
         <p>
-          Memberships, grooming bookings and café services are coming in later
+          Memberships, café services and payments are coming in later
           milestones.
         </p>
         <span>Not yet connected</span>

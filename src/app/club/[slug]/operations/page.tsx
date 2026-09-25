@@ -6,6 +6,14 @@ import { notFound } from "next/navigation";
 import { requireAccount } from "@/lib/auth";
 import { database, scoped } from "@/lib/database";
 import { clubsFor, dogsFor } from "@/lib/dogs";
+import { bookingsFor } from "@/lib/bookings";
+
+const londonDateTime = (value: string) =>
+  new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Europe/London",
+  }).format(new Date(value));
 export default async function Operations({
   params,
 }: {
@@ -20,6 +28,7 @@ export default async function Operations({
   if (!club) notFound();
   const dogs = await dogsFor(db, account.id, club.id);
   const applications = await applicationsFor(db, account.id, club.id);
+  const bookings = await bookingsFor(db, account.id, club.id);
   const care = await scoped(
     db,
     account.id,
@@ -52,6 +61,37 @@ export default async function Operations({
               </Link>
             </p>
           ))
+        )}
+      </section>
+      <section className="booking-summary">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">BOOKABLE GROOMING</span>
+            <h2>Upcoming schedule</h2>
+          </div>
+          <Link href={`/club/${slug}/booking-setup`} className="inline-link">
+            Configure services →
+          </Link>
+        </div>
+        {bookings.filter((booking) => booking.status === "confirmed").length ===
+        0 ? (
+          <p>No confirmed grooming bookings.</p>
+        ) : (
+          bookings
+            .filter((booking) => booking.status === "confirmed")
+            .map((booking) => (
+              <article className="booking-card" key={booking.id}>
+                <div>
+                  <h3>
+                    {booking.dog_name} · {booking.service_name}
+                  </h3>
+                  <p>
+                    {londonDateTime(booking.starts_at)} ·{" "}
+                    {booking.resource_name}
+                  </p>
+                </div>
+              </article>
+            ))
         )}
       </section>
       <div className="table-wrap">
@@ -93,8 +133,8 @@ export default async function Operations({
       </div>
       <div className="coming-next">
         <p>
-          Rotas, clocking, payroll, bookings and integrations remain on the
-          roadmap.
+          Recurring rotas, clocking, payroll, payments and integrations remain
+          on the roadmap.
         </p>
         <span>Not yet connected</span>
       </div>
