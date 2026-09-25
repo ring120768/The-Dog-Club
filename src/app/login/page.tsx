@@ -21,7 +21,7 @@ export default async function Login({
           <br />
           <em>Yours, too.</em>
         </h1>
-        <p>Good friends, tasty treats and a place to belong.</p>
+        <p>Good friends, tasty treats and a little pampering.</p>
         <div className="avatar-pack">
           <DogAvatar large colour="sand" />
           <DogAvatar large colour="rose" />

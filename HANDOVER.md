@@ -35,7 +35,7 @@ Working folder on Ringo's Mac: `~/Documents/ChatGPT/The Dog club` (not `DogClubP
 
 The user-supplied dog photo is copied unchanged to `public/brand/demo-dog.jpg` and used beside The Dog Club name on the login page and platform console. A shared DemoLogo component preserves its 4:3 composition. Operator emblems remain configurable. This source change is included in the logo checkpoint branch; it is not yet deployed to production.
 
-Login hero retains “Their happy place. Yours, too.” The approved supporting line is “Good friends, tasty treats and a place to belong.” This copy change is included in the same checkpoint, not deployed to production.
+Login hero retains “Their happy place. Yours, too.” The approved supporting line is “Good friends, tasty treats and a little pampering.” This copy change is included in the same checkpoint, not deployed to production.
 
 Checkpoint validation: TypeScript check and all 28 local tests passed; the local login response contains the original headline, approved supporting line and demo logo. Branch: `codex/demo-logo-checkpoint`. Production merge remains a separate step.
 
