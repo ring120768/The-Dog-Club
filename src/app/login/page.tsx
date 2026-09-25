@@ -1,4 +1,5 @@
-import { PawPrint, ArrowUpRight } from "lucide-react";
+import { DemoLogo } from "@/components/demo-logo";
+import { ArrowUpRight } from "lucide-react";
 import { loginAction } from "../actions";
 import { DogAvatar } from "@/components/dog-avatar";
 export const dynamic = "force-dynamic";
@@ -12,7 +13,7 @@ export default async function Login({
     <main className="login-page">
       <section className="login-story">
         <div className="wordmark">
-          <PawPrint /> THE DOG CLUB
+          <DemoLogo /> THE DOG CLUB
         </div>
         <span className="eyebrow">A LITTLE MORE TAIL-WAGGING</span>
         <h1>
@@ -20,7 +21,7 @@ export default async function Login({
           <br />
           <em>Yours, too.</em>
         </h1>
-        <p>A club for muddy paws, good coffee and the people who love them.</p>
+        <p>Good friends, tasty treats and a place to belong.</p>
         <div className="avatar-pack">
           <DogAvatar large colour="sand" />
           <DogAvatar large colour="rose" />
@@ -71,8 +72,9 @@ export default async function Login({
             Shared demo password: <code>PawsTogether!26</code>
           </p>
           <dl>
-            <dt>Platform owner</dt><dd>owner@demo.invalid</dd>
-              <dt>Willow member</dt>
+            <dt>Platform owner</dt>
+            <dd>owner@demo.invalid</dd>
+            <dt>Willow member</dt>
             <dd>alice@demo.invalid</dd>
             <dt>Another Willow member</dt>
             <dd>bea@demo.invalid</dd>
