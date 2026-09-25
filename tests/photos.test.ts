@@ -2,11 +2,12 @@ import { before, after, test } from "node:test";
 import assert from "node:assert/strict";
 import { crc32 } from "node:zlib";
 import { randomUUID } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import sharp from "sharp";
-import { initialise, scoped } from "../src/lib/database";
-import { migrate } from "../src/lib/migrations";
+import { scoped, type Db } from "../src/lib/database";
+import { testDatabase } from "./db";
+import { migrate, migrationsDir } from "../src/lib/migrations";
 import { dogsFor, saveDog } from "../src/lib/dogs";
 import {
   normalisePhoto,
@@ -16,7 +17,7 @@ import {
   type NormalisedPhoto,
 } from "../src/lib/photos";
 import { MAX_PHOTO_BYTES } from "../src/lib/photo-contract";
-let db: PGlite;
+let db: Db;
 let photo: NormalisedPhoto;
 const input = {
   name: "Photo test dog",
@@ -26,7 +27,7 @@ const input = {
   audience: "private",
 };
 before(async () => {
-  db = await initialise(await PGlite.create());
+  db = await testDatabase();
   photo = await normalisePhoto(
     await sharp({
       create: { width: 48, height: 32, channels: 3, background: "#235448" },
@@ -311,7 +312,7 @@ test("image responses never permit caching and denial returns no image data", as
 test("migration upgrades the old schema without losing records and runs once", async () => {
   const old = await PGlite.create();
   try {
-    await old.exec(await readFile("src/lib/schema.sql", "utf8"));
+    await old.exec(await readFile(`${migrationsDir}/000_schema.sql`, "utf8"));
     await old.exec(
       "INSERT INTO clubs VALUES('legacy','legacy','Existing Club','Existing tagline','#235448','London')",
     );
@@ -327,7 +328,7 @@ test("migration upgrades the old schema without losing records and runs once", a
     );
     assert.equal(
       (await old.query("SELECT * FROM schema_migrations")).rows.length,
-      2,
+      (await readdir(migrationsDir)).filter((f) => f.endsWith(".sql")).length,
     );
   } finally {
     await old.close();

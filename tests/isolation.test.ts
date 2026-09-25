@@ -1,6 +1,7 @@
 import { before, after, test } from "node:test";
 import assert from "node:assert/strict";
-import { PGlite } from "@electric-sql/pglite";
+import { testDatabase } from "./db";
+import type { Db } from "../src/lib/database";
 import {
   initialise,
   scoped,
@@ -8,7 +9,7 @@ import {
   hashPassword,
 } from "../src/lib/database";
 import { clubsFor, dogsFor, saveDog, publicDog } from "../src/lib/dogs";
-let db: PGlite;
+let db: Db;
 const bertie = "00000000-0000-4000-8000-000000000001";
 const otis = "00000000-0000-4000-8000-000000000003";
 const input = {
@@ -19,7 +20,7 @@ const input = {
   audience: "private",
 };
 before(async () => {
-  db = await initialise(await PGlite.create());
+  db = await testDatabase();
 });
 after(async () => {
   await db.close();

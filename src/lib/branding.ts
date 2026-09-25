@@ -1,19 +1,18 @@
-import type { PGlite } from "@electric-sql/pglite";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { scoped } from "./database";
+import { scoped, type Db, type Queryable } from "./database";
 import type { Club } from "./dogs";
 import { brandInput,onboardingInput } from "./brand-contract";
 export class ClubConfigurationError extends Error {}
-export async function isPlatformOwner(db:PGlite,account:string) {return scoped(db,account,"",false,async tx=>(await tx.query("SELECT account_id FROM platform_owners")).rows.length===1);}
-export async function platformClubs(db:PGlite,account:string) {
+export async function isPlatformOwner(db: Db,account:string) {return scoped(db,account,"",false,async tx=>(await tx.query("SELECT account_id FROM platform_owners")).rows.length===1);}
+export async function platformClubs(db: Db,account:string) {
  if(!await isPlatformOwner(db,account)) throw new ClubConfigurationError("Platform access is required.");
  return scoped(db,account,"",false,async tx=>(await tx.query<Club>("SELECT id,slug,name,tagline,colour,location,emblem,avatar_tone,version FROM clubs ORDER BY name")).rows);
 }
-export async function editableClub(db:PGlite,account:string,slug:string) {
+export async function editableClub(db: Db,account:string,slug:string) {
  return scoped(db,account,"",false,async tx=>(await tx.query<Club>(`SELECT id,slug,name,tagline,colour,location,emblem,avatar_tone,version FROM clubs c WHERE slug=$1 AND (EXISTS(SELECT 1 FROM platform_owners) OR EXISTS(SELECT 1 FROM memberships m WHERE m.club_id=c.id AND m.role='manager'))`,[slug])).rows[0]??null);
 }
-export async function createClub(db:PGlite,account:string,input:unknown) {
+export async function createClub(db: Db,account:string,input:unknown) {
  if(!await isPlatformOwner(db,account)) throw new ClubConfigurationError("Platform access is required.");
  const data=onboardingInput.parse(input);
  // Identity lookup is limited to an exact email, after platform authorisation. RLS rechecks the platform grant at write time.
@@ -27,7 +26,7 @@ export async function createClub(db:PGlite,account:string,input:unknown) {
  });} catch(error) {if((error as {code?:string}).code==='23505') throw new ClubConfigurationError("That club address is already in use. Choose another.");throw error;}
  return data.slug;
 }
-export async function updateBrand(db:PGlite,account:string,club:string,version:number,input:unknown) {
+export async function updateBrand(db: Db,account:string,club:string,version:number,input:unknown) {
  const data=brandInput.parse(input);z.number().int().positive().parse(version);
  await scoped(db,account,club,false,async tx=>{
   const result=await tx.query("UPDATE clubs SET name=$1,tagline=$2,colour=$3,location=$4,emblem=$5,avatar_tone=$6,version=version+1 WHERE id=$7 AND version=$8 RETURNING id",[data.name,data.tagline,data.colour,data.location,data.emblem,data.avatar_tone,club,version]);

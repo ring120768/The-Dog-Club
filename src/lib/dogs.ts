@@ -1,8 +1,7 @@
 import { applyPhotoChange, type PhotoChange } from "./photos";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import type { PGlite } from "@electric-sql/pglite";
-import { scoped } from "./database";
+import { scoped, type Db, type Queryable } from "./database";
 export type Club = {
   id: string;
   slug: string;
@@ -32,7 +31,7 @@ export const dogInput = z.object({
   avatar: z.enum(["sand", "sage", "rose"]),
   audience: z.enum(["private", "members", "public"]),
 });
-export async function clubsFor(db: PGlite, account: string) {
+export async function clubsFor(db: Db, account: string) {
   return scoped(
     db,
     account,
@@ -46,7 +45,7 @@ export async function clubsFor(db: PGlite, account: string) {
       ).rows,
   );
 }
-export async function dogsFor(db: PGlite, account: string, club: string) {
+export async function dogsFor(db: Db, account: string, club: string) {
   return scoped(
     db,
     account,
@@ -61,7 +60,7 @@ export async function dogsFor(db: PGlite, account: string, club: string) {
   );
 }
 export async function saveDog(
-  db: PGlite,
+  db: Db,
   account: string,
   club: string,
   id: string | undefined,
@@ -102,7 +101,7 @@ export async function saveDog(
     return dogId;
   });
 }
-export async function publicDog(db: PGlite, club: string, id: string) {
+export async function publicDog(db: Db, club: string, id: string) {
   if (!z.uuid().safeParse(id).success) return null;
   return scoped(
     db,

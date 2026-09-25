@@ -1,8 +1,7 @@
 import sharp from "sharp";
-import type { PGlite, Transaction } from "@electric-sql/pglite";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { scoped } from "./database";
+import { scoped, type Db, type Queryable } from "./database";
 import { MAX_PHOTO_BYTES, type PhotoScope } from "./photo-contract";
 
 export class PhotoValidationError extends Error {}
@@ -107,7 +106,7 @@ export async function photoChangeFromForm(
 }
 
 export async function applyPhotoChange(
-  tx: Transaction,
+  tx: Queryable,
   club: string,
   account: string,
   dogId: string,
@@ -144,7 +143,7 @@ export async function applyPhotoChange(
 }
 
 export async function readPhoto(
-  db: PGlite,
+  db: Db,
   account: string | null,
   scope: PhotoScope,
   club: string,
