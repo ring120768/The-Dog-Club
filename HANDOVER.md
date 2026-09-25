@@ -38,3 +38,5 @@ The user-supplied dog photo is copied unchanged to `public/brand/demo-dog.jpg` a
 Login hero retains “Their happy place. Yours, too.” The approved supporting line is “Good friends, tasty treats and a place to belong.” This copy change is included in the same checkpoint, not deployed to production.
 
 Checkpoint validation: TypeScript check and all 28 local tests passed; the local login response contains the original headline, approved supporting line and demo logo. Branch: `codex/demo-logo-checkpoint`. Production merge remains a separate step.
+
+Preview visibility fix: the narrow-screen layout no longer hides the login supporting paragraph. The approved sentence stays visible in the embedded viewing window and on mobile.
