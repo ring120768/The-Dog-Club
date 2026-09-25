@@ -58,3 +58,13 @@ The review also keeps grooming drafts private from managers until submission, re
 Review before rollout: application/invitation writes use privileged server transactions with explicit actor checks; restricted roles have read-only application access. Validate that boundary against production role grants. Add request throttling for invitation acceptance before public rollout, stronger care/document coverage and accessible form/pending-state checks. Review potential issuer-permission revocation races, transaction rollback and existing-manager/self-review UX. Test in non-production PostgreSQL before applying the migration. Do not run production schema changes from a preview.
 
 The earlier usage checkpoint preserved this work in draft PR #4. The browser acceptance milestone is now complete; the PR remains draft pending PostgreSQL migration review, rollout hardening and the production/demo presentation work above.
+
+## Grooming booking foundation checkpoint
+
+Branch `codex/grooming-booking`, stacked on the unmerged onboarding branch. Adds tenant-scoped grooming services and stations, staff qualifications, dated published shifts and breaks, resource closures, member availability, atomic booking confirmation, cancellation and audit events. A dog must belong to the signed-in household and have an approved grooming application. Prices and cancellation terms are snapshotted when the booking is made; the UI states that no payment is taken.
+
+The known-answer browser walkthrough passed on 25/09/2026 using local synthetic data: a 09:00–17:00 shift, 12:00–12:30 break and 60-minute service with a 15-minute clean-up buffer. The unsafe 11:00 slot was absent, 12:30 was available, confirmation removed the conflicting period through 13:30, 13:45 remained available, and cancellation restored 12:30. Persistent confirmation and cancellation messages were also verified.
+
+Validation: TypeScript check and all 43 isolated tests pass. The seven booking tests cover buffer/break calculations, price snapshots, concurrent confirmation, cancellation/audit, household and tenant isolation, resource closure/unpublished shifts and manager-only setup. The migration and all demo records remain local; production schema and data are untouched.
+
+Review before rollout: exercise the migration against non-production PostgreSQL and review effective database grants. The broad transactional locks deliberately favour correctness for this foundation and may need narrower advisory locking under measured multi-site load. Payments, recurring rotas, leave/sickness/swaps, rescheduling, notifications and the visit/collection workflow remain deferred.

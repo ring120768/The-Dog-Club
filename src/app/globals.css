@@ -655,6 +655,105 @@ th {
   margin-top: 20px;
   color: var(--muted);
 }
+.booking-page > h1,
+.booking-setup-page > h1 {
+  margin-top: 12px;
+}
+.booking-panel {
+  background: #eef0e8;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 22px;
+}
+.booking-search {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 1fr auto;
+  gap: 14px;
+  align-items: end;
+  margin: 28px 0;
+}
+.booking-search label,
+.field-pair > label,
+.cancel-form label {
+  display: grid;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.field-pair {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.available-slots,
+.booking-list,
+.booking-summary {
+  margin-top: 38px;
+}
+.available-slots > p,
+.booking-summary > p,
+.booking-list > p {
+  color: var(--muted);
+  margin-top: 8px;
+}
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+.slot-card,
+.booking-card,
+.booking-summary article {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 18px;
+}
+.slot-card {
+  display: grid;
+  gap: 12px;
+}
+.slot-card > strong {
+  font: 28px var(--serif);
+}
+.terms-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.terms-check input {
+  margin-top: 4px;
+}
+.booking-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 12px;
+}
+.booking-card h3 {
+  font-size: 24px;
+  margin: 5px 0;
+}
+.booking-card p {
+  color: var(--muted);
+}
+.booking-card small {
+  margin-top: 8px;
+}
+.cancel-form {
+  width: min(280px, 100%);
+  display: grid;
+  gap: 10px;
+}
+.booking-setup-page section {
+  margin-top: 42px;
+}
+.booking-summary article {
+  margin-top: 10px;
+}
 .public-profile {
   max-width: 650px;
   text-align: center;
@@ -866,6 +965,14 @@ th {
   }
   .neighbours article {
     max-width: 100%;
+  }
+  .booking-search,
+  .slot-grid,
+  .field-pair {
+    grid-template-columns: 1fr;
+  }
+  .booking-card {
+    display: grid;
   }
 }
 

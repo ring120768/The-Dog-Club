@@ -1,7 +1,14 @@
 import { ClubMark } from "@/components/club-mark";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { House, Dog, LogOut, ShieldCheck } from "lucide-react";
+import {
+  CalendarDays,
+  Dog,
+  House,
+  LogOut,
+  Settings2,
+  ShieldCheck,
+} from "lucide-react";
 import { requireAccount } from "@/lib/auth";
 import { database } from "@/lib/database";
 import { clubsFor } from "@/lib/dogs";
@@ -38,13 +45,28 @@ export default async function ClubLayout({
             <Dog size={19} />
             The pack
           </Link>
+          <Link href={`/club/${slug}/bookings`}>
+            <CalendarDays size={19} />
+            Grooming bookings
+          </Link>
           {club.role === "manager" && (
-            <Link href={`/club/${slug}/operations`}>
-              <ShieldCheck size={19} />
-              Manager overview
-            </Link>
+            <>
+              <Link href={`/club/${slug}/operations`}>
+                <ShieldCheck size={19} />
+                Manager overview
+              </Link>
+              <Link href={`/club/${slug}/booking-setup`}>
+                <Settings2 size={19} />
+                Booking setup
+              </Link>
+            </>
           )}
-          {club.role==="manager"&&<><Link href={`/club/${slug}/settings`}>Club branding</Link><Link href={`/club/${slug}/invitations`}>Invite members</Link></>}
+          {club.role === "manager" && (
+            <>
+              <Link href={`/club/${slug}/settings`}>Club branding</Link>
+              <Link href={`/club/${slug}/invitations`}>Invite members</Link>
+            </>
+          )}
         </nav>
         <div className="sidebar-bottom">
           <p>{club.location}</p>
