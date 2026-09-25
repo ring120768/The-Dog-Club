@@ -4,7 +4,7 @@ Commercial white-label software for membership-led dog clubs, grooming and pet h
 
 ## Status
 
-Project established on 25/09/2026. Specifications are complete enough to start technical discovery; application code has not yet been implemented. The Chiswick club is the first design partner. Platform name is provisional.
+Project established on 25/09/2026. The first local web increment is implemented: synthetic account sign-in, club branding, dog profiles with photo uploads, audience controls, public pages and a manager overview. This is not production-ready software. The Chiswick club is the first design partner. Platform name is provisional.
 
 ## Planning documents
 
@@ -24,6 +24,30 @@ This is independent of RoundMate. Do not reuse its codebase, production database
 
 ## Development
 
-Runtime/framework selection and setup commands will be documented when the initial application foundation is created. No installation or development-server commands exist yet.
+Requires Node.js 22 or later. Run only one development process against the local database.
+
+```sh
+npm ci
+cp .env.example .env.local
+npm run dev
+```
+
+Open http://127.0.0.1:3100. The login form starts with a synthetic member account. Other demo accounts appear under **Explore the demo accounts**. All use the synthetic password `PawsTogether!26`.
+
+| Account | Access |
+| --- | --- |
+| alice@demo.invalid | Willow member, Bertie's owner |
+| bea@demo.invalid | Willow member, Mabel's owner |
+| manager@demo.invalid | Willow manager overview |
+| coast@demo.invalid | Coast & Canine member, Otis's owner |
+
+```sh
+npm run typecheck
+npm test
+```
+
+The local database is created automatically in `.data/postgres` and persists across restarts. Never use real customer data in this increment. The database adapter requires `DOGCLUB_LOCAL_DEMO=1` and refuses production mode. Credentials, local data and build output are ignored by Git. `npm run build`/`npm start` are framework commands, not a deployable production workflow yet.
+
+See [implementation scope](docs/IMPLEMENTATION.md) and [verification](docs/VERIFICATION.md). Photo upload, replacement and removal now work with the profile’s visibility rules. JPEG, PNG and still WebP are supported; HEIC and animated images are not. See [photo design](docs/PHOTO_UPLOADS.md). Managed production storage, native mobile clients, operator onboarding and live integrations remain outstanding.
 
 GitHub repository: [ring120768/The-Dog-Club](https://github.com/ring120768/The-Dog-Club).
