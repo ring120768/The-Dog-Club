@@ -9,6 +9,7 @@ import { clubsFor, dogsFor } from "@/lib/dogs";
 import { bookingsFor } from "@/lib/bookings";
 import { visitsFor } from "@/lib/visits";
 import { visitLabels, type VisitStatus } from "@/lib/visit-contract";
+import { admissionDashboard } from "@/lib/admissions";
 import {
   ArrivalForm,
   VisitCorrectionForm,
@@ -39,6 +40,7 @@ export default async function Operations({
   const applications = await applicationsFor(db, account.id, club.id);
   const bookings = await bookingsFor(db, account.id, club.id);
   const visitData = await visitsFor(db, account.id, club.id);
+  const admissionData = await admissionDashboard(db, account.id, club.id);
   const visitMessage = (await searchParams).visit;
   const care = await scoped(
     db,
@@ -68,6 +70,23 @@ export default async function Operations({
       <p className="intro">
         {dogs.length} dog profiles · Access restricted to this club.
       </p>
+      <section className="operations-admission-summary">
+        <div>
+          <span className="eyebrow">LIVE CLUB ADMISSION</span>
+          <h2>
+            {admissionData.occupancy.humans} humans ·{" "}
+            {admissionData.occupancy.dogs} dogs
+          </h2>
+          <p>
+            {admissionData.settings
+              ? `Approved limits: ${admissionData.settings.human_capacity} ${admissionData.settings.human_capacity === 1 ? "human" : "humans"} and ${admissionData.settings.dog_capacity} ${admissionData.settings.dog_capacity === 1 ? "dog" : "dogs"}.`
+              : "Venue capacity has not been configured."}
+          </p>
+        </div>
+        <Link href={`/club/${slug}/admission`} className="button">
+          Open reception →
+        </Link>
+      </section>
       <section>
         <h2>Grooming approval queue</h2>
         {applications.length === 0 ? (

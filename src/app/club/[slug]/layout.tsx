@@ -5,6 +5,7 @@ import {
   CalendarDays,
   CreditCard,
   Dog,
+  DoorOpen,
   House,
   LogOut,
   Settings2,
@@ -53,6 +54,10 @@ export default async function ClubLayout({
           <Link href={`/club/${slug}/memberships`}>
             <CreditCard size={19} />
             Membership
+          </Link>
+          <Link href={`/club/${slug}/admission`}>
+            <DoorOpen size={19} />
+            Club admission
           </Link>
           {club.role === "manager" && (
             <>

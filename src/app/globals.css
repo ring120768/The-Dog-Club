@@ -952,15 +952,163 @@ th {
 .membership-admin-actions form {
   margin-top: 12px;
 }
+.admission-page > h1 {
+  margin-top: 12px;
+}
+.admission-manager-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 42px;
+}
+.admission-manager-grid h2,
+.admission-section h2 {
+  margin: 7px 0 16px;
+}
+.admission-panel,
+.member-pass-card,
+.pass-result,
+.active-admission,
+.admission-decision-list article,
+.occupancy-card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 22px;
+}
+.admission-form,
+.admission-inline-form {
+  display: grid;
+  gap: 13px;
+}
+.admission-form label,
+.pass-lookup label {
+  display: grid;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 650;
+}
+.admission-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 9px;
+}
+.admission-form legend {
+  font-size: 12px;
+  font-weight: 750;
+  margin-bottom: 8px;
+}
+.occupancy-card {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.occupancy-card div {
+  padding: 18px;
+  border-radius: 9px;
+  background: #eef0e8;
+  text-align: center;
+}
+.occupancy-card strong {
+  display: block;
+  font: 40px var(--serif);
+}
+.occupancy-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+}
+.admission-section {
+  margin-top: 42px;
+}
+.pass-lookup {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: end;
+}
+.pass-result,
+.active-admission,
+.admission-decision-list article {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: start;
+}
+.pass-result h3,
+.active-admission h3,
+.admission-decision-list h3 {
+  font-size: 24px;
+  margin: 5px 0;
+}
+.pass-result p,
+.active-admission p,
+.admission-decision-list p {
+  color: var(--muted);
+}
+.admission-inline-form {
+  width: min(420px, 100%);
+  grid-template-columns: 140px minmax(170px, 1fr) auto;
+}
+.admission-inline-form .error {
+  grid-column: 1/-1;
+}
+.member-pass-card {
+  margin-top: 34px;
+  max-width: 680px;
+}
+.member-pass-card > strong {
+  display: block;
+  margin: 15px 0 8px;
+  font: clamp(28px, 5vw, 48px) var(--serif);
+  letter-spacing: 0.08em;
+}
+.member-pass-card h2 {
+  margin: 10px 0;
+}
+.member-pass-card p {
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.operations-admission-summary {
+  margin-top: 28px;
+  padding: 22px;
+  border-radius: 12px;
+  background: #eef0e8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 22px;
+}
+.operations-admission-summary h2 {
+  font-size: 28px;
+  margin: 6px 0;
+}
+.operations-admission-summary p {
+  color: var(--muted);
+  font-size: 12px;
+}
 @media (max-width: 760px) {
   .visit-card-main,
   .visit-audit,
   .membership-plan-grid,
   .membership-manager-grid,
-  .membership-admin-actions {
+  .membership-admin-actions,
+  .admission-manager-grid,
+  .pass-lookup,
+  .admission-inline-form {
     grid-template-columns: 1fr;
   }
   .membership-card-heading {
+    display: grid;
+  }
+  .pass-result,
+  .active-admission,
+  .admission-decision-list article,
+  .operations-admission-summary {
     display: grid;
   }
 }
