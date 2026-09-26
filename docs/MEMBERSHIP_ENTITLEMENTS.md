@@ -1,6 +1,6 @@
 # Membership and entitlement foundation
 
-This increment introduces configurable membership plans and an audited benefit ledger without pretending that Stripe billing is connected or that the first operator's commercial rules are final.
+This increment introduces configurable membership plans and an audited benefit ledger. The following Stripe sandbox increment adds hosted member checkout and webhook-confirmed subscription state; neither document represents a production merchant launch or final commercial rules.
 
 ## Included
 
@@ -28,6 +28,6 @@ A plan costs £39 per month and includes two grooming credits for 01/10/2099–0
 
 ## Deferred
 
-Stripe Checkout/Billing, webhook activation, receipts, refunds, provider reconciliation, automatic renewal/allocation, proration, VAT treatment, member self-purchase, household adults and applying a grooming credit to a booking price remain later work. The UI must say that demo activation takes no payment.
+The Stripe sandbox contract is documented in `STRIPE_MEMBERSHIP_CHECKOUT.md`. Production Connect onboarding, Customer Portal, emailed receipts, refunds, proration, confirmed VAT treatment, household adults and applying a grooming credit to a booking price remain later work. Demo assignment must continue to say that it takes no payment.
 
 The account temporarily represents the membership holder until the household model is implemented. The migration remains local until reviewed and exercised against non-production PostgreSQL. Production is unchanged.

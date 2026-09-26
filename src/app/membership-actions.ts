@@ -11,7 +11,19 @@ import {
   createMembershipPlan,
   scheduleMembershipCancellation,
   setMembershipState,
+  subscriptionsFor,
 } from "@/lib/memberships";
+import {
+  prepareMembershipCheckout,
+  requestStripeCancellation,
+  setPlanStripePrice,
+  stripePriceLinkContext,
+  validateMembershipPrice,
+} from "@/lib/stripe-memberships";
+import {
+  stripeMembershipGateway,
+  stripeMembershipPriceSnapshot,
+} from "@/lib/stripe-client";
 
 export type MembershipActionState = { error?: string; success?: string };
 
@@ -79,18 +91,81 @@ export async function cancelMembershipAction(
   _state: MembershipActionState,
 ): Promise<MembershipActionState> {
   const actor = await requireAccount();
+  let stripeManaged = false;
   try {
-    await scheduleMembershipCancellation(
-      await database(),
-      actor.id,
-      club,
-      subscription,
-    );
+    const db = await database();
+    const current = (
+      await subscriptionsFor(db, actor.id, club)
+    ).subscriptions.find((item) => item.id === subscription);
+    if (!current) throw new OnboardingError("Membership unavailable.");
+    stripeManaged = current.source === "stripe";
+    if (stripeManaged)
+      await requestStripeCancellation(
+        db,
+        actor.id,
+        club,
+        subscription,
+        stripeMembershipGateway,
+      );
+    else await scheduleMembershipCancellation(db, actor.id, club, subscription);
   } catch (error) {
     return errorState(error);
   }
   refresh(slug);
-  redirect(`/club/${slug}/memberships?membership=cancelled`);
+  redirect(
+    `/club/${slug}/memberships?membership=${stripeManaged ? "cancellation-requested" : "cancelled"}`,
+  );
+}
+
+export async function setStripePriceAction(
+  club: string,
+  slug: string,
+  plan: string,
+  _state: MembershipActionState,
+  form: FormData,
+): Promise<MembershipActionState> {
+  const actor = await requireAccount();
+  try {
+    const priceId = String(form.get("stripe_price_id") ?? "");
+    const context = await stripePriceLinkContext(
+      await database(),
+      actor.id,
+      club,
+      plan,
+    );
+    const price = await stripeMembershipPriceSnapshot(
+      priceId,
+      context.external_account_id,
+    );
+    validateMembershipPrice(context.monthly_price_pence, price);
+    await setPlanStripePrice(await database(), actor.id, club, plan, priceId);
+  } catch (error) {
+    return errorState(error);
+  }
+  refresh(slug);
+  return { success: "Stripe sandbox Price linked." };
+}
+
+export async function startMembershipCheckoutAction(
+  club: string,
+  plan: string,
+  _state: MembershipActionState,
+): Promise<MembershipActionState> {
+  const actor = await requireAccount();
+  let checkoutUrl: string;
+  try {
+    checkoutUrl = await prepareMembershipCheckout(
+      await database(),
+      actor.id,
+      club,
+      plan,
+      process.env.APP_URL ?? "",
+      stripeMembershipGateway,
+    );
+  } catch (error) {
+    return errorState(error);
+  }
+  redirect(checkoutUrl);
 }
 
 export async function membershipStateAction(
