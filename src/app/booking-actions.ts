@@ -85,13 +85,16 @@ export async function reserveBookingAction(
       service_id: service,
       starts_at: startsAt,
       accepted_terms: form.get("accepted_terms"),
+      use_membership_credit: form.get("use_membership_credit"),
     });
   } catch (error) {
     return errorState(error);
   }
   revalidatePath(`/club/${slug}/bookings`);
   revalidatePath(`/club/${slug}/operations`);
-  redirect(`/club/${slug}/bookings?booked=1`);
+  redirect(
+    `/club/${slug}/bookings?booked=1${form.get("use_membership_credit") === "yes" ? "&credit=1" : ""}`,
+  );
 }
 
 export async function cancelBookingAction(

@@ -120,6 +120,11 @@ export default async function Operations({
                         {londonDateTime(booking.starts_at)} ·{" "}
                         {booking.resource_name}
                       </p>
+                      <small>
+                        {booking.grooming_credits_applied > 0
+                          ? `${booking.grooming_credits_applied} grooming ${booking.grooming_credits_applied === 1 ? "credit" : "credits"} applied · £0 due`
+                          : `£${(booking.amount_due_pence_snapshot / 100).toFixed(2)} due`}
+                      </small>
                       {visit?.authorised_collector_name && (
                         <small>
                           Authorised collector:{" "}
