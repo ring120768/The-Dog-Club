@@ -78,4 +78,6 @@ Interactive acceptance used the `Dog_Club_Pixel` Pixel 9 Pro emulator on Android
 
 A temporary `Revocation controller` session listed Alice's devices, revoked the current Android session by its public UUID and confirmed it disappeared from the active list. After force-stop and relaunch, the app received 401, cleared `dog_club_secure_session.xml` to an empty map and returned to sign-in. The controller session was then revoked. This validates the lost-device path without retaining test access.
 
-The iOS Keychain plugin compiles in the unsigned simulator build but has not yet completed the equivalent interactive terminate/relaunch/revoke journey. This work used the local PGlite migration only. Production and live Supabase were untouched.
+The same journey passed on the named `Dog Club iPhone` simulator running iOS 26.5. The normally signed simulator build stored Alice's session in the this-device-only Keychain item, restored Willow after termination without a password, displayed `Apple device · This device`, and returned to sign-in with the correct message after a temporary second session revoked it. The next launch proved the rejected Keychain record had been cleared. An explicitly unsigned simulator build correctly could not exercise Keychain and showed the storage-unavailable warning; it was not used as persistence evidence.
+
+This work used the local PGlite migration only. Production and live Supabase were untouched.
