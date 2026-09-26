@@ -8,6 +8,7 @@
     dog: null,
     photoUrl: "",
     bookingOptions: null,
+    rescheduleBooking: null,
   };
   const byId = (id) => document.getElementById(id);
   const views = [
@@ -144,6 +145,13 @@
         ? `${booking.groomingCreditsApplied} membership credit${booking.groomingCreditsApplied === 1 ? "" : "s"}`
         : `£${(booking.amountDuePence / 100).toFixed(2)} due`;
       detail.textContent = `${formatDateTime(booking.startsAt)} · ${payment}`;
+      const actions = document.createElement("div");
+      actions.className = "booking-actions";
+      const change = document.createElement("button");
+      change.className = "secondary booking-change";
+      change.type = "button";
+      change.textContent = "Change time";
+      change.addEventListener("click", () => openBooking(booking));
       const cancel = document.createElement("button");
       cancel.className = "secondary booking-cancel";
       cancel.type = "button";
@@ -170,7 +178,8 @@
           cancel.disabled = false;
         }
       });
-      item.append(title, detail, cancel);
+      actions.append(change, cancel);
+      item.append(title, detail, actions);
       list.append(item);
     });
     byId("booking-empty").textContent = payload.upcomingBookings.length
@@ -219,6 +228,7 @@
     const dog = selectedBookingDog();
     const service = selectedBookingService();
     const membership = state.bookingOptions?.membership;
+    const rescheduling = Boolean(state.rescheduleBooking);
     const canUseCredit = Boolean(
       dog?.canUseMembershipCredits &&
       service?.membershipCreditEligible &&
@@ -226,25 +236,42 @@
       membership.remainingGroomingCredits >= service.membershipCreditCost,
     );
     byId("booking-price").textContent = service
-      ? `£${(service.pricePence / 100).toFixed(2)} · ${service.durationMinutes} minutes`
+      ? rescheduling
+        ? `${service.durationMinutes} minutes`
+        : `£${(service.pricePence / 100).toFixed(2)} · ${service.durationMinutes} minutes`
       : "";
     byId("booking-terms").textContent = service?.cancellationTerms ?? "";
     const creditChoice = byId("booking-credit-choice");
-    creditChoice.classList.toggle("hidden", !canUseCredit);
+    creditChoice.classList.toggle("hidden", rescheduling || !canUseCredit);
     byId("booking-credit").checked = canUseCredit;
     byId("booking-credit-copy").textContent = canUseCredit
       ? `Use ${service.membershipCreditCost} of your ${membership.remainingGroomingCredits} remaining grooming credits`
       : "";
-    byId("booking-payment-note").textContent = canUseCredit
-      ? "Your selected membership credit covers this booking."
-      : service
-        ? `£${(service.pricePence / 100).toFixed(2)} will be due at the club. No payment is taken in this demo.`
-        : "";
+    byId("booking-commercial").classList.toggle("hidden", rescheduling);
+    byId("booking-terms-accepted").disabled = rescheduling;
+    byId("booking-reschedule-note").classList.toggle("hidden", !rescheduling);
+    byId("booking-reschedule-note").textContent = rescheduling
+      ? "Your original price, grooming credits and cancellation terms stay unchanged."
+      : "";
+    byId("booking-payment-note").textContent = rescheduling
+      ? ""
+      : canUseCredit
+        ? "Your selected membership credit covers this booking."
+        : service
+          ? `£${(service.pricePence / 100).toFixed(2)} will be due at the club. No payment is taken in this demo.`
+          : "";
     clearBookingSlots();
   }
-  async function openBooking() {
+  function lockRescheduleChoices() {
+    const rescheduling = Boolean(state.rescheduleBooking);
+    byId("booking-dog").disabled = rescheduling;
+    byId("booking-service").disabled = rescheduling;
+    byId("booking-terms-accepted").disabled = rescheduling;
+  }
+  async function openBooking(booking = null) {
     const message = byId("booking-message");
     message.textContent = "";
+    state.rescheduleBooking = booking;
     try {
       const options = await request(
         `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/booking-options`,
@@ -266,10 +293,20 @@
         option.textContent = service.name;
         serviceSelect.append(option);
       });
+      if (booking) {
+        dogSelect.value = booking.dogId;
+        serviceSelect.value = booking.serviceId;
+      }
+      byId("booking-heading").textContent = booking
+        ? "Change appointment"
+        : "Book a groom";
+      byId("booking-submit").textContent = booking
+        ? "Confirm new time"
+        : "Confirm booking";
       byId("booking-date").min = localDateInput();
-      byId("booking-date").value = localDateInput(
-        new Date(Date.now() + 24 * 60 * 60 * 1000),
-      );
+      byId("booking-date").value = booking
+        ? localDateInput(new Date(booking.startsAt))
+        : localDateInput(new Date(Date.now() + 24 * 60 * 60 * 1000));
       byId("booking-setup-empty").textContent = options.dogs.length
         ? options.services.length
           ? ""
@@ -279,6 +316,7 @@
         !options.dogs.length || !options.services.length;
       byId("booking-terms-accepted").checked = false;
       updateBookingSummary();
+      lockRescheduleChoices();
       show("booking-view");
     } catch (error) {
       message.textContent = error.message;
@@ -382,6 +420,7 @@
     state.club = null;
     state.dog = null;
     state.bookingOptions = null;
+    state.rescheduleBooking = null;
     clearPhoto();
     show("login-view");
     byId("password").value = "";
@@ -422,8 +461,11 @@
     }
   });
   byId("back").addEventListener("click", () => show("club-view"));
-  byId("open-booking").addEventListener("click", openBooking);
-  byId("booking-back").addEventListener("click", () => show("dog-view"));
+  byId("open-booking").addEventListener("click", () => openBooking());
+  byId("booking-back").addEventListener("click", () => {
+    state.rescheduleBooking = null;
+    show("dog-view");
+  });
   byId("booking-dog").addEventListener("change", updateBookingSummary);
   byId("booking-service").addEventListener("change", updateBookingSummary);
   byId("booking-search").addEventListener("click", async () => {
@@ -438,6 +480,8 @@
         service: byId("booking-service").value,
         date: byId("booking-date").value,
       });
+      if (state.rescheduleBooking)
+        query.set("booking", state.rescheduleBooking.id);
       const availability = await request(
         `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/availability?${query}`,
       );
@@ -477,28 +521,37 @@
     }
     setBusy(form, true);
     try {
+      const rescheduling = state.rescheduleBooking;
       const useCredit =
         !byId("booking-credit-choice").classList.contains("hidden") &&
         byId("booking-credit").checked;
-      await request(
-        `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/bookings`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            dog_id: byId("booking-dog").value,
-            service_id: byId("booking-service").value,
-            starts_at: slot.value,
-            accepted_terms: "yes",
-            ...(useCredit ? { use_membership_credit: "yes" } : {}),
-          }),
-        },
-      );
+      const path = rescheduling
+        ? `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/bookings/${encodeURIComponent(rescheduling.id)}`
+        : `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/bookings`;
+      await request(path, {
+        method: rescheduling ? "PATCH" : "POST",
+        body: JSON.stringify(
+          rescheduling
+            ? { starts_at: slot.value }
+            : {
+                dog_id: byId("booking-dog").value,
+                service_id: byId("booking-service").value,
+                starts_at: slot.value,
+                accepted_terms: "yes",
+                ...(useCredit ? { use_membership_credit: "yes" } : {}),
+              },
+        ),
+      });
+      state.rescheduleBooking = null;
       await openClub(state.club);
-      byId("dog-message").textContent = "Grooming booking confirmed.";
+      byId("dog-message").textContent = rescheduling
+        ? `Appointment moved to ${formatDateTime(slot.value)}.`
+        : "Grooming booking confirmed.";
     } catch (error) {
       message.textContent = error.message;
     } finally {
       setBusy(form, false);
+      lockRescheduleChoices();
     }
   });
   byId("profile-back").addEventListener("click", async () => {

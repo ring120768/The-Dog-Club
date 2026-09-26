@@ -96,14 +96,14 @@ Review draft GA01, GA02, A15 and A22 with operator/designer. Confirm wash/dry se
 
 ## Current status
 
-Completed: competitor research, four-page drawing review, detailed feature PRD, white-label product specification, gated build backlog and the local application checkpoints recorded below. The shared mobile client now reaches grooming booking confirmation in development. No live service payment, payroll submission, mobile-store release or production booking migration has been completed.
+Completed: competitor research, four-page drawing review, detailed feature PRD, white-label product specification, gated build backlog and the local application checkpoints recorded below. The shared mobile client now reaches grooming booking confirmation, transactional rescheduling and cancellation in development. No live service payment, payroll submission, mobile-store release or production booking migration has been completed.
 
-Next execution milestone: finish iOS and Android booking acceptance against reviewed HTTPS non-production infrastructure, then design atomic rescheduling and resolve the service-payment operating decision. Project location is `/Users/ianring/Documents/ChatGPT/The Dog club`, connected to `ring120768/The-Dog-Club`.
+Next execution milestone: finish iOS and Android booking acceptance against reviewed HTTPS non-production infrastructure, then resolve the service-payment operating decision. Project location is `/Users/ianring/Documents/ChatGPT/The Dog club`, connected to `ring120768/The-Dog-Club`.
 
 
 ## Implementation checkpoint — 25/09/2026
 
-The local web foundation now includes secure operator/member/staff invitations, tenant-scoped venue/resource setup, configurable branding and a computed operator demo-readiness checklist. Automated acceptance provisions two distinct synthetic operators and configures each without SQL or a code fork. Stage 1 remains in progress because production identity/datastore rehearsal, operator lifecycle enforcement and deployment controls are outstanding. Stage 2 has working web dog profiles and controlled photos plus a shared iOS/Android client for sign-in, club selection, dog profile/photo editing, membership/upcoming-booking summaries, live grooming availability, booking confirmation and cancellation. Mobile rescheduling, reviewed HTTPS acceptance on both platforms, payment collection, persisted secure sessions and distribution remain outstanding.
+The local web foundation now includes secure operator/member/staff invitations, tenant-scoped venue/resource setup, configurable branding and a computed operator demo-readiness checklist. Automated acceptance provisions two distinct synthetic operators and configures each without SQL or a code fork. Stage 1 remains in progress because production identity/datastore rehearsal, operator lifecycle enforcement and deployment controls are outstanding. Stage 2 has working web dog profiles and controlled photos plus a shared iOS/Android client for sign-in, club selection, dog profile/photo editing, membership/upcoming-booking summaries, live grooming availability, booking confirmation, transactional rescheduling and cancellation. Reviewed HTTPS acceptance on both platforms, payment collection, persisted secure sessions and distribution remain outstanding.
 
 
 ### Photo increment — 25/09/2026

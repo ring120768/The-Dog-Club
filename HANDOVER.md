@@ -278,3 +278,13 @@ Cancellation records the mobile-member reason in the booking and audit event, im
 Validation: TypeScript and all 116 isolated tests pass, including confirmed-booking removal and restoration of the synthetic credit balance from one to two. Capacitor sync, Android debug assembly with Java 21 and the unsigned iOS simulator build also pass. Production remains untouched.
 
 Next: complete the iOS/Android visual journey against reviewed HTTPS non-production infrastructure. Then design a transactional rescheduling operation that locks the existing booking and replacement capacity together.
+
+## Mobile booking-rescheduling checkpoint — 26/09/2026
+
+Branch `codex/mobile-booking-reschedule`, stacked on `codex/mobile-booking-cancellation`. Each future appointment now has a Change time action. The member chooses another date and live slot while the dog and service stay fixed. Availability excludes the current booking only after verifying that it is a confirmed appointment for that club, dog and service.
+
+The bearer-authorised PATCH route locks the existing appointment, rechecks owner or live household booking authority, rejects cancelled bookings and visits that have started, and secures qualified staff and station capacity before changing any booking data. The move is one database transaction: an unavailable replacement leaves the original appointment intact. The booking keeps its snapshotted price, amount due, applied credits and cancellation terms, while an append-only `booking.rescheduled` event records the old and new times.
+
+Validation: TypeScript and all 119 isolated tests pass. New domain coverage proves a successful move retains the booking identity and commercial terms, does not debit another credit, writes the reschedule event, rejects another household and preserves the original appointment when replacement capacity cannot be secured. Capacitor sync, Android debug assembly with Java 21 and the unsigned iOS simulator build pass. Production remains untouched.
+
+Next: complete the iOS/Android visual journey against reviewed HTTPS non-production infrastructure and resolve whether service payments remain pay-at-club or use a reviewed Stripe flow. Secure Keychain/Keystore sessions, device revocation, signing and store distribution remain separate release gates.

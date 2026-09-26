@@ -44,6 +44,7 @@ export async function GET(
       url.searchParams.get("dog") ?? "",
       url.searchParams.get("service") ?? "",
       url.searchParams.get("date") ?? "",
+      url.searchParams.get("booking"),
     );
     return mobileJson(request, availability);
   } catch (error) {
