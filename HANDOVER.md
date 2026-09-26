@@ -190,3 +190,11 @@ Validation: TypeScript and all 98 tests pass. The export suite covers platform-o
 The complete 18-migration stack was also applied to a clean disposable Supabase PostgreSQL 17 container as `supabase_admin`, producing 52 public tables. Effective `club_app` grants were inspected and all 98 tests passed through the rollback-only shared-PostgreSQL harness; final counts showed zero synthetic clubs and export events. The lower-privilege `postgres` login correctly failed to create the migration ledger because it does not own `public`, so deployment must use the approved migration-owner connection. See `docs/NON_PRODUCTION_POSTGRES_REHEARSAL.md`. Production remains untouched.
 
 Next: begin the next approved product slice. Community moderation/search and the iOS/Android shared-client foundation are the strongest code-owned gaps; live email, Stripe, POS and payroll proof still depend on provider credentials and operator decisions. Do not describe the disposable rehearsal as managed-cloud staging approval.
+
+## Shared mobile foundation checkpoint — 26/09/2026
+
+Branch `codex/mobile-foundation`, stacked on `codex/operator-export-restore`. Adds generated iOS and Android Capacitor 8.4.3 projects under the shared member-app identifier `uk.co.thedogclub.member`, a safe-area-aware bundled development shell, the approved demo dog image and repeatable sync/open scripts. The shell explicitly says when no Dog Club server is connected; this is a build foundation, not a store-ready native member journey.
+
+The latest 8.5.2 CLI was rejected because `npm audit` reported a moderate transitive `uuid` advisory through its Xcode parser. The compatible 8.4.3 dependency set reports zero vulnerabilities. Android debug assembly passes with the installed Java 21 runtime; Java 25 is too new for the generated Gradle toolchain. The unsigned iOS simulator build passes with Xcode 26.5. No signing identity, store listing, production endpoint, push entitlement or external deployment was created.
+
+Next: add a native-safe authentication/API contract and exercise sign-in, tenant selection, dog profile and photo selection on both simulators. Keep camera permissions, push/deep links, account deletion, signing and distribution behind their own acceptance gates.
