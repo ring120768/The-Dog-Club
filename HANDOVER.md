@@ -8,7 +8,7 @@ Branch `codex/mobile-https-staging`, stacked on `codex/mobile-secure-sessions`. 
 
 `npm run mobile:verify-staging` performs a secret-safe acceptance probe with a synthetic staging member: sign in, list club memberships, confirm the current device session, then revoke the probe session in a `finally` block. It logs counts and status only. Preview currently has no Vercel environment variables; Production alone has `DOGCLUB_DB` and `DATABASE_URL`. Do not copy that production connection into Preview. Provision a separate synthetic Supabase staging database, use its transaction-pooler connection and follow `docs/MOBILE_STAGING.md` before claiming HTTPS native acceptance.
 
-Validation: TypeScript, all 138 tests and the local Next.js production build pass. The Android build in the primary checkout is blocked by the known untracked duplicate `android/app/src/main/res/xml/config 2.xml`; preserve that user file. Re-run Android and iOS from a clean worktree after this commit. Production data, environment variables and deployment remain untouched.
+Validation: TypeScript, all 138 tests, the local Next.js production build, Android debug assembly with Java 21 and the unsigned iOS simulator build pass. Native builds were verified from a clean temporary worktree because the primary checkout contains the known untracked duplicate `android/app/src/main/res/xml/config 2.xml`; that user file was left untouched. Production data, environment variables and deployment remain untouched.
 
 Live activation completed on 25/09/2026 after the initial verification. Production now has DOGCLUB_DB=supabase and a sensitive DATABASE_URL (production only). Deployment `dpl_JBmSJCdR6jy351PK6VeDWsis93Wf` is READY and serves https://the-dog-club-psi.vercel.app from commit `5744bc2`.
 
