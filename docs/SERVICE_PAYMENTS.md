@@ -8,11 +8,13 @@ This is a separate flow from membership subscriptions. A service payment buys on
 
 Dynamic payment methods remain enabled by omitting `payment_method_types`. Stripe Tax stays disabled until the operator confirms its VAT registrations and item treatment. Each operator remains the merchant for its customer payments unless the commercial and settlement review explicitly selects another model.
 
-## Implemented server foundation
+## Implemented foundation
 
 The local schema and domain service now implement the 30-minute capacity hold, request-level idempotency, Stripe-hosted one-time Checkout creation, signature-verified paid/failed event routing, amount/currency/account/booking matching, successful confirmation, failed and expired hold release, and late-payment exception isolation. Availability treats only unexpired payment holds as conflicts. Provider and finance tables have forced RLS and no client-role grants. Operator archives retain the service-payment ledger and exceptions while removing hosted Checkout URLs.
 
-This foundation is not exposed to the mobile client yet. No real Stripe sandbox session has been created, no automatic refund is implemented and production remains untouched.
+The bearer-authorised mobile API now creates the hold and returns the hosted URL. The shared iOS/Android shell opens it with Capacitor Browser, listens for the browser closing and reads an authenticated status endpoint. A manual refresh remains available for web fallback and delayed webhook delivery. The status projection exposes only booking ID, bounded lifecycle state and expiry; it never returns connected-account, Session, PaymentIntent or hosted URL data.
+
+No real Stripe sandbox session has been created, no automatic refund is implemented and production remains untouched.
 
 ## Booking and payment lifecycle
 
@@ -55,7 +57,7 @@ Booking audit actions distinguish `booking.payment_started`, `booking.payment_co
 
 The booking options response tells the client whether a selection is covered by credits or requires online payment. For online payment, the confirmation action returns a checkout URL and an `awaiting_payment` booking ID. The app displays “Held for 30 minutes” and opens the hosted page using a reviewed system-browser flow.
 
-Universal Links/App Links and an HTTPS fallback page must be configured before mobile acceptance. The app refreshes the booking after returning and shows `Payment processing`, `Confirmed`, `Payment failed` or `Hold expired`. It never infers success from a query parameter.
+Universal Links/App Links and an HTTPS fallback page must be configured before mobile acceptance. The app refreshes the booking after returning and shows payment processing, confirmed, failed, expired or late-payment follow-up copy. It never infers success from a query parameter.
 
 ## Acceptance gates
 

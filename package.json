@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@capacitor/android": "^8.4.3",
+    "@capacitor/browser": "^8.0.4",
     "@capacitor/core": "^8.4.3",
     "@capacitor/ios": "^8.4.3",
     "@electric-sql/pglite": "0.5.8",
