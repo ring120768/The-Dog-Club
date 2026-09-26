@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { isPlatformOwner } from "./branding";
 import type { Db } from "./database";
-import { isDemoMode, type RuntimeEnvironment } from "./runtime";
+import {
+  isDemoMode,
+  isHostedPostgres,
+  type RuntimeEnvironment,
+} from "./runtime";
 
 const clubId = z.string().trim().min(1).max(100);
 
@@ -25,7 +29,7 @@ export async function demoGuideFor(
   requestedClub: string,
   environment: RuntimeEnvironment = process.env,
 ): Promise<DemoGuide> {
-  if (!isDemoMode(environment) || environment.DOGCLUB_DB === "supabase")
+  if (!isDemoMode(environment) || isHostedPostgres(environment))
     throw new DemoGuideError("The guided demo is unavailable.");
   if (!(await isPlatformOwner(db, actor)))
     throw new DemoGuideError("Platform access is required.");

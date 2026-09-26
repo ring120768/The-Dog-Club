@@ -1,6 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 
 test("mobile hidden state wins over component display rules", async () => {
   const shell = await readFile(
@@ -95,4 +102,59 @@ test("native sessions use the secure vault and expose device revocation", async 
   assert.match(script, /Sign out device/);
   assert.match(shell, /Your password is never stored/);
   assert.match(shell, /id="session-list"/);
+});
+
+test("native release assets compile and lock a reviewed HTTPS server", async () => {
+  const output = await mkdtemp(join(tmpdir(), "dog-club-mobile-"));
+  try {
+    await execFileAsync(
+      process.execPath,
+      ["scripts/prepare-mobile-shell.mjs", "--output", output],
+      {
+        cwd: new URL("..", import.meta.url),
+        env: {
+          ...process.env,
+          MOBILE_APP_SERVER_URL: "https://staging.example.test",
+        },
+      },
+    );
+    const [configuration, shell, script] = await Promise.all([
+      readFile(join(output, "runtime-config.js"), "utf8"),
+      readFile(join(output, "index.html"), "utf8"),
+      readFile(join(output, "app.js"), "utf8"),
+    ]);
+    assert.match(
+      configuration,
+      /"serverUrl":"https:\/\/staging\.example\.test"/,
+    );
+    assert.match(configuration, /"locked":true/);
+    assert.match(shell, /id="server-setup"/);
+    assert.match(shell, /runtime-config\.js/);
+    assert.match(script, /configuredServer\.locked/);
+    assert.match(script, /server-setup/);
+  } finally {
+    await rm(output, { recursive: true, force: true });
+  }
+});
+
+test("native release preparation rejects an insecure remote server", async () => {
+  const output = await mkdtemp(join(tmpdir(), "dog-club-mobile-"));
+  try {
+    await assert.rejects(
+      execFileAsync(
+        process.execPath,
+        ["scripts/prepare-mobile-shell.mjs", "--output", output],
+        {
+          cwd: new URL("..", import.meta.url),
+          env: {
+            ...process.env,
+            MOBILE_APP_SERVER_URL: "http://staging.example.test",
+          },
+        },
+      ),
+      /MOBILE_APP_SERVER_URL must use HTTPS/,
+    );
+  } finally {
+    await rm(output, { recursive: true, force: true });
+  }
 });

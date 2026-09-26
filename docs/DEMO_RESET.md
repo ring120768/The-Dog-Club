@@ -10,7 +10,7 @@ Reset is available only when all of these conditions hold:
 
 - `DOGCLUB_LOCAL_DEMO=1`;
 - `NODE_ENV` is not `production`;
-- `DOGCLUB_DB` is not `supabase`;
+- `DOGCLUB_DB` is neither `postgres` nor the legacy `supabase` value;
 - the signed-in account is a platform owner;
 - the selected club has at least one member and every member account uses the reserved `@demo.invalid` domain;
 - the operator ticks the confirmation box for that request.

@@ -2,6 +2,28 @@
 
 Updated 26/09/2026
 
+## Commercial pricing proposal — 26/09/2026
+
+`docs/COMMERCIAL_PRICING.md` records the initial UK sales hypothesis: £349 per location/month plus £2,500 onboarding, and a limited Founding Partner offer of £1,500 onboarding plus £249/month for the first 12 months. Managed operator-branded iOS/Android apps, additional locations, dedicated infrastructure, usage charges and bespoke work are separate. The proposal is not an approved quote; it includes market evidence and explicit validation gates before public pricing.
+
+## Database hosting architecture decision — 26/09/2026
+
+The commercial white-label hosting rule is now explicit in `docs/ARCHITECTURE_DATABASE_HOSTING.md`. Supabase PostgreSQL is the shared multi-tenant production platform by default; operator separation is enforced through tenant relationships, server-side authorisation and row-level security. Neon remains synthetic Preview/mobile staging only. Dedicated managed PostgreSQL deployments are separately contracted enterprise exceptions using the same migrations and application contracts, with their own credentials and operations.
+
+## Mobile HTTPS staging configuration checkpoint — 26/09/2026
+
+Branch `codex/mobile-https-staging`, stacked on `codex/mobile-secure-sessions`. Native assets are now generated into ignored `mobile-build/`. Setting `MOBILE_APP_SERVER_URL` to a reviewed HTTPS origin compiles that origin into both native apps, hides the editable server field and overrides any older server saved with a Keychain/Keystore session. The preparation command rejects HTTP, credentials, paths, queries and fragments. Builds without the variable retain the local development field and must not be signed or distributed.
+
+`npm run mobile:verify-staging` performs a secret-safe acceptance probe with a synthetic staging member: sign in, list club memberships, confirm the current device session, then revoke the probe session in a `finally` block. It logs counts and status only.
+
+Vercel Marketplace resource `dog-club-staging` (`orange-haze-45910454`) is now provisioned on Neon's Free plan in London, with Neon Auth disabled and connectivity limited to Preview. The complete 22-migration stack applied transactionally through the unpooled owner connection, producing 56 public tables, two synthetic clubs and five synthetic accounts. The pooled `DATABASE_URL` is injected by the integration. `DOGCLUB_DB=postgres` is scoped to branch `codex/mobile-https-staging`; Production retains its existing Supabase variables and data.
+
+Deployment `dpl_AjT84xu1zAy5cs3iRXshmnHciTWb` completed successfully. A protected live acceptance signed in `alice@demo.invalid`, returned the Willow membership, listed the current device session and revoked that session. The temporary Vercel automation bypass used for the probe was revoked and the project reports no remaining bypass secrets.
+
+The user authorised a Deployment Protection Exception on 26/09/2026 for the stable synthetic branch domain `the-dog-club-git-codex-mobile-9694ab-ring120768-2588s-projects.vercel.app`. An unauthenticated login request now returns HTTP 200; other previews retain standard Vercel authentication and Production is unchanged. The secret-safe mobile verifier passed against Neon and revoked its test session. A deployed browser journey signed Alice in, reached Willow, displayed Bertie and the member routes, then signed out.
+
+Validation: TypeScript, all 138 tests, the local Next.js production build, Android debug assembly with Java 21 and the unsigned iOS simulator build pass. The public staging origin was compiled into both native projects from a clean temporary worktree because the primary checkout contains the known untracked duplicate `android/app/src/main/res/xml/config 2.xml`; that user file was left untouched. The iOS build installed on the named simulator and rendered the live branded login without an editable server field. A complete interactive native sign-in and booking journey on both platforms remains the next device acceptance. Production data, environment variables and deployment remain untouched.
+
 Live activation completed on 25/09/2026 after the initial verification. Production now has DOGCLUB_DB=supabase and a sensitive DATABASE_URL (production only). Deployment `dpl_JBmSJCdR6jy351PK6VeDWsis93Wf` is READY and serves https://the-dog-club-psi.vercel.app from commit `5744bc2`.
 
 The requested initial platform-owner account was created with a salted password hash; no synthetic accounts or clubs were seeded. Actual browser sign-in reached the platform-owner console. The absent demo public profile returns 404 instead of 500. Credentials are intentionally omitted from this handover.

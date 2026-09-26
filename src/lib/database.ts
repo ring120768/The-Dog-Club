@@ -4,6 +4,7 @@ import pg from "pg";
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { hashPassword } from "./passwords";
+import { isHostedPostgres } from "./runtime";
 export { hashPassword, verifyPassword } from "./passwords";
 
 // The subset of PGlite's API the app uses. PGlite satisfies it directly; pg is wrapped below.
@@ -129,7 +130,7 @@ export async function initialise(db: Db) {
 
 const globalDb = globalThis as unknown as { dogClubDb?: Promise<Db> };
 export function database() {
-  if (process.env.DOGCLUB_DB === "supabase") {
+  if (isHostedPostgres()) {
     if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not set.");
     return (globalDb.dogClubDb ??= Promise.resolve(
       postgresDb(process.env.DATABASE_URL),
@@ -140,7 +141,7 @@ export function database() {
     process.env.NODE_ENV === "production"
   )
     throw new Error(
-      "Local demo is disabled. Set DOGCLUB_DB=supabase to use production PostgreSQL.",
+      "Local demo is disabled. Set DOGCLUB_DB=postgres to use hosted PostgreSQL.",
     );
   return (globalDb.dogClubDb ??= mkdir(join(process.cwd(), ".data"), {
     recursive: true,

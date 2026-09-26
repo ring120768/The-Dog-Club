@@ -1,5 +1,11 @@
 # Foundation verification — 25/09/2026
 
+## Public mobile staging — 26/09/2026
+
+The stable `codex/mobile-https-staging` Vercel branch domain has an explicitly authorised Deployment Protection Exception and returns the synthetic login without Vercel authentication. The secret-safe staging verifier signed the synthetic Willow member in through the mobile API, confirmed one club membership and the current device session, and revoked the session during cleanup.
+
+The reviewed HTTPS origin was compiled into both native projects in an isolated worktree. Android debug assembly with Java 21 and the unsigned iOS simulator build pass. The iOS app installed and rendered the live staging login with the server selector absent. A deployed browser journey reached Willow and Bertie using the same synthetic account, then signed out. Full interactive native sign-in and booking acceptance on both platforms remains open; Production and its Supabase data were not changed.
+
 ## Automated
 
 `npm run typecheck` passes. `npm test` passes 28 checks against fresh embedded PostgreSQL with the actual SQL policies:

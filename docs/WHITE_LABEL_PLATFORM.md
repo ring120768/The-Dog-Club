@@ -26,6 +26,8 @@ Module visibility and subscription entitlements are enforced server-side. Custom
 
 ## Tenant and account model
 
+Database hosting is governed by the accepted [database hosting and tenant-isolation decision](ARCHITECTURE_DATABASE_HOSTING.md): commercial operators share the multi-tenant Supabase PostgreSQL service by default, Neon is synthetic Preview/staging only, and dedicated databases are separately contracted exceptions.
+
 A tenant is an operating business. Locations, staff access, households, dogs, care records, subscriptions, sales, payroll batches, integration accounts and social profiles belong to it. A person may authenticate once and join two clubs, but their tenant memberships and role grants are separate. Do not silently copy dog records or cross-publish profiles between clubs. A household's participation in one club must not reveal membership elsewhere.
 
 Use immutable tenant IDs in all operational records and composite tenant-aware relationships. Derive authorised context server-side; never trust a client-supplied tenant ID alone. Apply database-level isolation as well as service checks. No assumption that adding a tenant column alone secures a system.
@@ -79,7 +81,9 @@ Sources checked 25/09/2026: [Apple review guidelines](https://developer.apple.co
 
 ## Commercial packaging proposal
 
-Sell a monthly software subscription per operating business/location, with an onboarding fee for configuration/import/training. Optional paid modules can include workforce/payroll, additional supported integrations and managed branded mobile releases. These are packaging hypotheses; no prices have been approved.
+The dated [commercial pricing proposal](COMMERCIAL_PRICING.md) sets an initial UK sales anchor of £349 per location/month plus £2,500 onboarding, with a limited Founding Partner offer and separately priced managed native apps, dedicated infrastructure and bespoke work. These remain validation hypotheses rather than an approved customer quotation.
+
+Sell a monthly software subscription per operating business/location, with an onboarding fee for configuration/import/training. Optional paid modules can include workforce/payroll, additional supported integrations and managed branded mobile releases.
 
 Keep provider charges, payment processing, SMS, hardware and app-store account costs visible. Define usage allowances and support terms before quoting. Do not introduce a transaction commission until merchants understand it and the commercial/payment model supports it.
 
