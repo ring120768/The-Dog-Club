@@ -403,6 +403,8 @@ The previous 17–27 week estimate covers the core product with a limited initia
 
 The detailed [platform specification](WHITE_LABEL_PLATFORM.md) defines tenancy, branding, operator onboarding, platform administration, payment ownership, demo isolation and commercial release gates. These requirements apply across all earlier feature sections; references to a single venue describe the first customer, not a hard-coded product limit.
 
+The accepted [database hosting decision](ARCHITECTURE_DATABASE_HOSTING.md) makes the deployment model explicit: Supabase is the shared multi-tenant commercial production platform, Neon is isolated synthetic staging, and a dedicated database is an optional contracted enterprise deployment rather than the default white-label model.
+
 | ID | Priority | Requirement | Acceptance criteria |
 |---|---|---|---|
 | WL-01 | P0 | Business data isolation | Tenant A cannot access Tenant B through API, media, exports, search, queues, analytics or provider callbacks; tests exercise hostile ID substitution |

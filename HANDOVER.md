@@ -2,6 +2,10 @@
 
 Updated 26/09/2026
 
+## Database hosting architecture decision — 26/09/2026
+
+The commercial white-label hosting rule is now explicit in `docs/ARCHITECTURE_DATABASE_HOSTING.md`. Supabase PostgreSQL is the shared multi-tenant production platform by default; operator separation is enforced through tenant relationships, server-side authorisation and row-level security. Neon remains synthetic Preview/mobile staging only. Dedicated managed PostgreSQL deployments are separately contracted enterprise exceptions using the same migrations and application contracts, with their own credentials and operations.
+
 ## Mobile HTTPS staging configuration checkpoint — 26/09/2026
 
 Branch `codex/mobile-https-staging`, stacked on `codex/mobile-secure-sessions`. Native assets are now generated into ignored `mobile-build/`. Setting `MOBILE_APP_SERVER_URL` to a reviewed HTTPS origin compiles that origin into both native apps, hides the editable server field and overrides any older server saved with a Keychain/Keystore session. The preparation command rejects HTTP, credentials, paths, queries and fragments. Builds without the variable retain the local development field and must not be signed or distributed.

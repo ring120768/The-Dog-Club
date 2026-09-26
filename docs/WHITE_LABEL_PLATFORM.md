@@ -26,6 +26,8 @@ Module visibility and subscription entitlements are enforced server-side. Custom
 
 ## Tenant and account model
 
+Database hosting is governed by the accepted [database hosting and tenant-isolation decision](ARCHITECTURE_DATABASE_HOSTING.md): commercial operators share the multi-tenant Supabase PostgreSQL service by default, Neon is synthetic Preview/staging only, and dedicated databases are separately contracted exceptions.
+
 A tenant is an operating business. Locations, staff access, households, dogs, care records, subscriptions, sales, payroll batches, integration accounts and social profiles belong to it. A person may authenticate once and join two clubs, but their tenant memberships and role grants are separate. Do not silently copy dog records or cross-publish profiles between clubs. A household's participation in one club must not reveal membership elsewhere.
 
 Use immutable tenant IDs in all operational records and composite tenant-aware relationships. Derive authorised context server-side; never trust a client-supplied tenant ID alone. Apply database-level isolation as well as service checks. No assumption that adding a tenant column alone secures a system.
