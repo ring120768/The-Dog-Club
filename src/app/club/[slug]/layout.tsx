@@ -10,6 +10,7 @@ import {
   LogOut,
   Settings2,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 import { requireAccount } from "@/lib/auth";
 import { database } from "@/lib/database";
@@ -58,6 +59,10 @@ export default async function ClubLayout({
           <Link href={`/club/${slug}/admission`}>
             <DoorOpen size={19} />
             Club admission
+          </Link>
+          <Link href={`/club/${slug}/household`}>
+            <Users size={19} />
+            Household access
           </Link>
           {club.role === "manager" && (
             <>

@@ -63,17 +63,20 @@ async function requireEligibleDog(
   club: string,
   dog: string,
 ) {
-  const eligible = await tx.query(
-    `SELECT d.id FROM dogs d
+  const eligible = await tx.query<{ owner_id: string }>(
+    `SELECT d.owner_id FROM dogs d
      JOIN memberships m ON m.club_id=d.club_id AND m.account_id=d.owner_id
      JOIN dog_applications a ON a.club_id=d.club_id AND a.dog_id=d.id AND a.activity='grooming' AND a.status='approved'
-     WHERE d.club_id=$1 AND d.id=$2 AND d.owner_id=$3`,
+     WHERE d.club_id=$1 AND d.id=$2 AND (d.owner_id=$3 OR EXISTS(
+      SELECT 1 FROM household_adult_grants h WHERE h.club_id=d.club_id AND h.owner_account_id=d.owner_id
+      AND h.adult_account_id=$3 AND h.revoked_at IS NULL AND h.can_manage_bookings))`,
     [club, dog, actor],
   );
   if (!eligible.rows.length)
     throw new OnboardingError(
       "This dog is not approved for grooming bookings.",
     );
+  return eligible.rows[0].owner_id;
 }
 
 export async function createBookingSetup(
@@ -332,7 +335,7 @@ export async function reserveBooking(
   if (data.starts_at <= new Date())
     throw new OnboardingError("Choose a future slot.");
   return db.transaction(async (tx) => {
-    await requireEligibleDog(tx, actor, club, data.dog_id);
+    const bookingOwner = await requireEligibleDog(tx, actor, club, data.dog_id);
     const service = (
       await tx.query<GroomingService>(
         "SELECT * FROM grooming_services WHERE club_id=$1 AND id=$2 AND active",
@@ -405,6 +408,10 @@ export async function reserveBooking(
     let membershipSubscriptionId: string | null = null;
     let groomingCreditsApplied = 0;
     if (data.use_membership_credit) {
+      if (bookingOwner !== actor)
+        throw new OnboardingError(
+          "Only the primary account can apply membership benefits to this booking.",
+        );
       if (!service.membership_credit_eligible)
         throw new OnboardingError(
           "This service cannot be booked with grooming credits.",
@@ -518,14 +525,26 @@ export async function cancelBooking(
   const cancellationReason = z.string().trim().min(1).max(500).parse(reason);
   await db.transaction(async (tx) => {
     const item = (
-      await tx.query<GroomingBooking & { owner_id: string; manager: boolean }>(
-        `SELECT b.*,d.owner_id,EXISTS(SELECT 1 FROM memberships m WHERE m.club_id=b.club_id AND m.account_id=$2 AND m.role='manager') AS manager
+      await tx.query<
+        GroomingBooking & {
+          owner_id: string;
+          manager: boolean;
+          household_adult: boolean;
+        }
+      >(
+        `SELECT b.*,d.owner_id,
+         EXISTS(SELECT 1 FROM memberships m WHERE m.club_id=b.club_id AND m.account_id=$2 AND m.role='manager') AS manager,
+         EXISTS(SELECT 1 FROM household_adult_grants h WHERE h.club_id=b.club_id AND h.owner_account_id=d.owner_id
+          AND h.adult_account_id=$2 AND h.revoked_at IS NULL AND h.can_manage_bookings) AS household_adult
          FROM grooming_bookings b JOIN dogs d ON d.club_id=b.club_id AND d.id=b.dog_id
          WHERE b.club_id=$1 AND b.id=$3 FOR UPDATE OF b`,
         [club, actor, booking],
       )
     ).rows[0];
-    if (!item || (item.owner_id !== actor && !item.manager))
+    if (
+      !item ||
+      (item.owner_id !== actor && !item.manager && !item.household_adult)
+    )
       throw new OnboardingError("Booking unavailable.");
     if (item.status !== "confirmed")
       throw new OnboardingError("This booking is already cancelled.");

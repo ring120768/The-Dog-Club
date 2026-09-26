@@ -56,7 +56,7 @@ export default async function BookingsPage({
   );
   if (!club) notFound();
   const dogs = (await dogsFor(db, account.id, club.id)).filter(
-    (dog) => dog.owner_id === account.id,
+    (dog) => dog.can_book,
   );
   const services = await activeServices(db, account.id, club.id);
   const bookings = await bookingsFor(db, account.id, club.id);
@@ -78,9 +78,10 @@ export default async function BookingsPage({
       (currentMembership.state === "payment_issue" &&
         currentMembership.payment_issue_benefits)),
   );
-  const availableCredits = benefitsAvailable
-    ? currentMembership!.remaining_grooming_credits
-    : 0;
+  const availableCredits =
+    benefitsAvailable && selectedDog?.owner_id === account.id
+      ? currentMembership!.remaining_grooming_credits
+      : 0;
   let availability:
     | {
         service: GroomingService;

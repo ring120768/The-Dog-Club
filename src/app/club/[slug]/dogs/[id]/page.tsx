@@ -18,7 +18,7 @@ export default async function EditDog({
     id === "new"
       ? undefined
       : (await dogsFor(db, account.id, club.id)).find(
-          (d) => d.id === id && d.owner_id === account.id,
+          (d) => d.id === id && d.can_manage,
         );
   if (id !== "new" && !dog) notFound();
   return (
