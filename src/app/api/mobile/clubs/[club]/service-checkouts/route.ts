@@ -7,6 +7,7 @@ import { clubsFor } from "@/lib/dogs";
 import {
   mobileJson,
   mobileOptions,
+  mobileRequestOrigin,
   rejectDisallowedMobileOrigin,
 } from "@/lib/mobile-http";
 import { mobileAccount } from "@/lib/mobile-session";
@@ -59,7 +60,7 @@ export async function POST(
       account.id,
       club.id,
       input,
-      demo ? new URL(request.url).origin : (process.env.APP_URL ?? ""),
+      demo ? mobileRequestOrigin(request) : (process.env.APP_URL ?? ""),
       demo ? demoServiceGateway : stripeServiceGateway,
     );
     return mobileJson(request, checkout, { status: 201 });

@@ -58,4 +58,14 @@ Capacitor Browser opened the local payment wall showing Bertie, the service, Lon
 
 The first pass rendered the confirmed booking as `£65.00 due`. The corrected home projection distinguishes membership credit, captured payment and amount still due without exposing the protected payment ledger to the restricted club role. A rebuilt and reinstalled iOS app visibly rendered the same booking as `£65.00 paid`.
 
-Automated verification passes: `npm run typecheck`, all 133 tests, `npm run build`, Capacitor sync, clean Android debug assembly with Java 21 and unsigned iOS simulator compilation. Android assembly required the pre-existing untracked duplicate resource `config 2.xml` to be moved out of the resource folder for the build; it was restored automatically. Android interactive acceptance remains outstanding because no Android Virtual Device or emulator image is installed. No production service, live payment or card data was involved.
+Automated verification at this checkpoint passed: `npm run typecheck`, all 133 tests, `npm run build`, Capacitor sync, clean Android debug assembly with Java 21 and unsigned iOS simulator compilation. Android assembly required the pre-existing untracked duplicate resource `config 2.xml` to be moved out of the resource folder for the build; it was restored automatically. The Android interactive acceptance is recorded below. No production service, live payment or card data was involved.
+
+# Android guided-demo rehearsal — 26/09/2026
+
+The shared Capacitor debug build was installed on the named `Dog_Club_Pixel` Pixel 9 Pro emulator running Android API 36. Against the local synthetic server at `10.0.2.2`, Alice signed in, selected Willow, saw the active Care Demo membership and two grooming credits, selected Bertie and the Member full groom at 11:45 on 27/09/2026, chose card payment, accepted the cancellation terms and opened the local payment wall.
+
+The payment wall visibly displayed Bertie, the service, the London appointment time, the £65 total and `DEMONSTRATION · NO MONEY OR CARD DATA`. Completing the simulation confirmed the checkout. Returning to the app and signing in again displayed both the earlier 09:15 booking and the Android 11:45 booking as `£65.00 paid`.
+
+Android acceptance found and corrected the missing `https://localhost` CORS origin, debug-build mixed-content handling, loss of the emulator-facing Host header and the fresh-emulator Chrome first-run interruption. The finished implementation uses an unexported local checkout activity only in debuggable builds and only for `localhost`, `127.0.0.1` or `10.0.2.2`; HTTPS release checkout remains on Capacitor Browser. The payment note now follows the current membership-credit selection.
+
+Final automated verification passes: `npm run typecheck`, all 134 tests, `npm run build`, Capacitor sync and clean Android debug assembly with Java 21. The known untracked duplicate Android resource was moved out only during assembly and restored. Production, real Stripe and card data were untouched.

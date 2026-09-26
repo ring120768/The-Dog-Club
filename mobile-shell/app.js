@@ -38,12 +38,18 @@
   }
   function safeServer(value) {
     const url = new URL(value);
-    const local = ["127.0.0.1", "10.0.2.2", "localhost"].includes(url.hostname);
-    if (url.protocol !== "https:" && !(url.protocol === "http:" && local))
+    if (url.protocol !== "https:" && !isLocalHttpUrl(url))
       throw new Error(
         "Use an HTTPS server, or a recognised local development address.",
       );
     return url.origin;
+  }
+  function isLocalHttpUrl(value) {
+    const url = value instanceof URL ? value : new URL(value);
+    return (
+      url.protocol === "http:" &&
+      ["127.0.0.1", "10.0.2.2", "localhost"].includes(url.hostname)
+    );
   }
   async function request(path, options = {}) {
     const headers = new Headers(options.headers);
@@ -234,6 +240,20 @@
     state.pendingCheckout = null;
     byId("booking-payment-refresh").classList.add("hidden");
   }
+  function updateBookingPaymentNote() {
+    const service = selectedBookingService();
+    const rescheduling = Boolean(state.rescheduleBooking);
+    const useCredit =
+      !byId("booking-credit-choice").classList.contains("hidden") &&
+      byId("booking-credit").checked;
+    byId("booking-payment-note").textContent = rescheduling
+      ? ""
+      : useCredit
+        ? "Your selected membership credit covers this booking."
+        : service
+          ? `Pay £${(service.pricePence / 100).toFixed(2)} securely with Stripe to confirm this appointment.`
+          : "";
+  }
   function updateBookingSummary() {
     const dog = selectedBookingDog();
     const service = selectedBookingService();
@@ -263,13 +283,7 @@
     byId("booking-reschedule-note").textContent = rescheduling
       ? "Your original price, grooming credits and cancellation terms stay unchanged."
       : "";
-    byId("booking-payment-note").textContent = rescheduling
-      ? ""
-      : canUseCredit
-        ? "Your selected membership credit covers this booking."
-        : service
-          ? `Pay £${(service.pricePence / 100).toFixed(2)} securely with Stripe to confirm this appointment.`
-          : "";
+    updateBookingPaymentNote();
     clearBookingSlots();
   }
   function lockRescheduleChoices() {
@@ -418,6 +432,16 @@
     }
   }
   async function openHostedCheckout(url) {
+    const localDemoBrowser =
+      window.Capacitor?.Plugins?.LocalDemoBrowser;
+    if (
+      platform() === "android" &&
+      isLocalHttpUrl(url) &&
+      localDemoBrowser?.open
+    ) {
+      await localDemoBrowser.open({ url });
+      return;
+    }
     const browser = window.Capacitor?.Plugins?.Browser;
     if (!browser?.open) {
       window.open(url, "_blank", "noopener,noreferrer");
@@ -542,6 +566,10 @@
     resetCheckoutAttempt();
     updateBookingSummary();
   });
+  byId("booking-credit").addEventListener(
+    "change",
+    updateBookingPaymentNote,
+  );
   byId("booking-date").addEventListener("change", resetCheckoutAttempt);
   byId("booking-slots").addEventListener("change", resetCheckoutAttempt);
   byId("booking-payment-refresh").addEventListener(

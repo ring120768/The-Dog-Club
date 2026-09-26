@@ -1,4 +1,8 @@
-const nativeOrigins = new Set(["capacitor://localhost", "http://localhost"]);
+const nativeOrigins = new Set([
+  "capacitor://localhost",
+  "http://localhost",
+  "https://localhost",
+]);
 
 function configuredOrigins() {
   return new Set(
@@ -21,6 +25,21 @@ export function mobileCorsHeaders(request: Request) {
     "Access-Control-Max-Age": "600",
     Vary: "Origin",
   });
+}
+
+export function mobileRequestOrigin(request: Request) {
+  const requestUrl = new URL(request.url);
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const host = (forwardedHost ?? request.headers.get("host") ?? requestUrl.host)
+    .split(",")[0]
+    .trim();
+  const forwardedProtocol = request.headers.get("x-forwarded-proto");
+  const protocol = (
+    forwardedProtocol ?? requestUrl.protocol.replace(/:$/, "")
+  )
+    .split(",")[0]
+    .trim();
+  return `${protocol}://${host}`;
 }
 
 export function rejectDisallowedMobileOrigin(request: Request) {
