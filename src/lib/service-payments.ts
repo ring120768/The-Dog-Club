@@ -374,7 +374,12 @@ export async function applyServiceCheckoutEvent(
   return true;
 }
 
-export async function expireServicePaymentHolds(db: Db, now = new Date()) {
+export async function expireServicePaymentHolds(
+  db: Db,
+  now = new Date(),
+  limit = 250,
+) {
+  const batchLimit = Math.max(1, Math.min(500, Math.trunc(limit)));
   return db.transaction(async (tx) => {
     const expired = await tx.query<{
       id: string;
@@ -384,8 +389,9 @@ export async function expireServicePaymentHolds(db: Db, now = new Date()) {
       `SELECT c.id,c.club_id,c.booking_id FROM service_checkout_sessions c
        JOIN grooming_bookings b ON b.club_id=c.club_id AND b.id=c.booking_id
        WHERE c.status IN ('creating','open','awaiting_payment') AND c.expires_at<=$1
-       AND b.status='awaiting_payment' FOR UPDATE OF c,b`,
-      [now.toISOString()],
+       AND b.status='awaiting_payment' ORDER BY c.expires_at,c.id
+       LIMIT $2 FOR UPDATE OF c,b SKIP LOCKED`,
+      [now.toISOString(), batchLimit],
     );
     for (const item of expired.rows) {
       await tx.query(
@@ -403,4 +409,25 @@ export async function expireServicePaymentHolds(db: Db, now = new Date()) {
     }
     return expired.rows.length;
   });
+}
+
+export async function reconcileExpiredServicePaymentHolds(
+  db: Db,
+  now = new Date(),
+  batchSize = 250,
+  maxBatches = 4,
+) {
+  const boundedBatchSize = Math.max(1, Math.min(500, Math.trunc(batchSize)));
+  const boundedBatches = Math.max(1, Math.min(20, Math.trunc(maxBatches)));
+  let expiredHolds = 0;
+  let finalBatch = 0;
+  for (let batch = 0; batch < boundedBatches; batch += 1) {
+    finalBatch = await expireServicePaymentHolds(db, now, boundedBatchSize);
+    expiredHolds += finalBatch;
+    if (finalBatch < boundedBatchSize) break;
+  }
+  return {
+    expiredHolds,
+    moreMayRemain: finalBatch === boundedBatchSize,
+  };
 }

@@ -316,3 +316,13 @@ Closing the native browser reads a separate authenticated status projection. It 
 Validation: TypeScript, all 123 isolated tests, Capacitor synchronisation, Android debug assembly with Java 21 and the unsigned iOS simulator build pass. Focused coverage includes request reuse, tenant denial and pending/confirmed/expired/late status projection. `npm audit` reports zero vulnerabilities. This checkpoint has not run a real Stripe sandbox Checkout or a visual device journey, and production remains untouched.
 
 Next: run a real Stripe sandbox Checkout and signed webhook sequence against reviewed HTTPS non-production infrastructure. Add Universal Links/App Links plus the HTTPS fallback before treating return-to-app as release-ready; automatic refunds and café POS remain later policy-led slices.
+
+## Service-payment expiry reconciliation checkpoint — 26/09/2026
+
+Branch `codex/service-payment-expiry`, stacked on `codex/mobile-service-checkout-ui`. Adds a protected Vercel maintenance endpoint that converts effectively expired payment holds into persisted cancelled bookings, expired checkout sessions and audit events. Work is bounded to four batches of 250 rows per invocation, and `SKIP LOCKED` makes overlapping invocations safe. The endpoint requires an exact `Bearer` match against a `CRON_SECRET` of at least 16 characters and returns non-cacheable aggregate counts only.
+
+Capacity already releases exactly when the 30-minute timestamp passes because availability and payment-status reads compare the expiry directly. The checked-in schedule runs at 03:17 UTC once daily to reconcile durable state and remains valid on Vercel Hobby, whose cron minimum is once per day and whose timing may vary within the hour. No secret was generated or added to Vercel, and production remains untouched.
+
+Validation: TypeScript, all 125 isolated tests, `vercel.json` parsing and the production Next.js build pass. Authentication coverage proves exact bearer matching and fail-closed behaviour for absent or weak secrets; service-payment coverage exercises bounded multi-batch reconciliation and the existing late-payment quarantine.
+
+Next: validate the maintenance endpoint in a non-production deployment with a configured `CRON_SECRET`, then run the real Stripe sandbox Checkout and signed webhook sequence once the missing Stripe and app-origin credentials are available.
