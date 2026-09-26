@@ -344,3 +344,11 @@ Branch `codex/demo-reset`, stacked on `codex/demo-service-paywall`. The local pl
 The server permits the reset only in explicit non-production local demo mode, refuses `DOGCLUB_DB=supabase`, rechecks platform-owner authority and rejects any club with a member address outside the reserved `@demo.invalid` domain. Browser acceptance proved the unchecked request is rejected and a confirmed Willow reset removed its existing demonstration activity while the operator remained Demo ready. Production remains untouched.
 
 Validation: TypeScript, all 131 isolated tests and the production Next.js build pass. Next: keep the reset behind the same local-only boundary while preparing the repeatable member-to-manager demonstration script.
+
+## Guided local sales-demo checkpoint — 26/09/2026
+
+Branch `codex/demo-guide`, stacked on `codex/demo-reset`. The local platform console now links to a guided demonstration command centre. It selects Willow by default, can switch between synthetic operators, reads live configuration readiness and bounded activity counts, and derives the member and manager demo addresses from the selected tenant rather than hard-coding one brand.
+
+The six-step story covers a clean reset, member app introduction, grooming booking and labelled payment simulation, manager diary, grooming visit through verified collection and the member's reschedule/cancellation controls. The page and companion `docs/DEMO_WALKTHROUGH.md` state the simulation and missing-provider boundaries explicitly. The guide rechecks platform ownership, requires explicit local demo mode, refuses Supabase and rejects mixed/non-demo tenant accounts; production returns not found.
+
+TypeScript, all 133 isolated tests and the production Next.js build pass. Browser acceptance rendered Willow as Ready with its live dog/activity counts, Alice and the manager, working operator switching links and all six steps. Next: use this guide for an uninterrupted rehearsal on one iOS simulator and one Android emulator.
