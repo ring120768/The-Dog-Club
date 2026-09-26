@@ -238,3 +238,13 @@ The upload route authenticates the bearer session, distinguishes unauthenticated
 Validation: TypeScript and all 108 isolated tests pass. Three new tests cover exact bounded bytes, early rejection from declared size and streamed over-limit rejection. A live localhost round trip replaced Bertie's synthetic photograph, fetched the resulting 23,194-byte WebP, denied Bea's replacement with 404, removed the photograph and confirmed the profile URL cleared. The synthetic local record was returned to its original no-photo state. Capacitor sync and both native debug builds pass. Production remains untouched.
 
 Next: run the complete member journey interactively on named iOS and Android simulators against a reviewed HTTPS non-production endpoint. Then address secure Keychain/Keystore session persistence and device-level revocation before signing or distribution.
+
+## Mobile simulator acceptance checkpoint — 26/09/2026
+
+Branch `codex/mobile-simulator-polish`, stacked on `codex/mobile-dog-photo-edit`. The unsigned iOS build was installed on a disposable iPhone 17 Pro simulator running iOS 26.5 and exercised against the local synthetic server. The synthetic member signed in, selected The Willow Club, opened Bertie’s club-member profile, saw the bearer-delivered photograph and authorised photo controls, opened the populated profile editor, then returned to a blank login screen after the app was terminated and relaunched. This confirms the current session is memory-only on device.
+
+Interactive acceptance exposed a CSS specificity defect: when a dog had a photograph, the coloured initial fallback could remain visible beneath it because `.profile-photo.avatar` overrode `.hidden`. The shared shell now makes the visibility state authoritative, with a regression test covering the rule. The corrected profile displays one image only.
+
+Validation: all 109 isolated tests and TypeScript validation pass. Capacitor sync, Android debug assembly with Java 21 and the unsigned iOS simulator build pass. Android interactive acceptance is still outstanding because this Mac has no Android Virtual Device or installed emulator system image; no large SDK image was downloaded implicitly. The iOS pass used localhost and synthetic records, not a reviewed HTTPS non-production deployment. Production remains untouched.
+
+Next: provision or select an Android Virtual Device and repeat the same member journey. Then move to a reviewed HTTPS non-production endpoint and design Keychain/Keystore session persistence plus device-level revocation before signing or distribution.

@@ -248,7 +248,9 @@
         font-size: 0.82rem;
       }
       .hidden {
-        display: none;
+        /* Visibility state must beat component display rules such as
+           .profile-photo.avatar, otherwise both photo and fallback render. */
+        display: none !important;
       }
     </style>
   </head>
