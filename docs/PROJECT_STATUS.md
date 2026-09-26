@@ -5,16 +5,16 @@
 Canonical working directory: `/Users/ianring/Documents/ChatGPT/The Dog club`.
 GitHub: https://github.com/ring120768/The-Dog-Club.git
 
-The original PRD, roadmap and white-label specification remain the product scope. The first implementation increment is a local, persistent web foundation, not the completed first roadmap milestone.
+The original PRD, roadmap and white-label specification remain the product scope. The application is a local, persistent web foundation with a growing end-to-end demo journey, not a production-ready release.
 
-Implemented: Next.js/TypeScript application, server-side opaque sessions for four synthetic accounts, account/club membership checks, PostgreSQL row-level security under a restricted role, two database-configured club brands, dog creation/editing, validated photo upload/replacement/removal, private/member/public audience controls, public projections, member discovery and club-restricted manager overview. Care notes are separately protected. Profile changes produce audit events.
+Implemented: Next.js/TypeScript application; server-side opaque sessions and account recovery; tenant membership and PostgreSQL row-level security; configurable branding; secure operator, member, household-adult and staff invitations; dog profiles/photos/audiences; grooming approval, booking and visit lifecycle; membership entitlements and Stripe sandbox checkout contracts; admission/capacity; staff permissions; venue, service, station and shift configuration; and a platform-owned operator demo-readiness view. Sensitive care, household, billing and operational records retain their separate access boundaries.
 
-Verified: typecheck and 28 automated checks; browser sign-in, profile creation, public-page rendering and persistence after a development-server restart. Details in VERIFICATION.md.
+Verified: TypeScript and 91 automated checks. The latest acceptance creates two differently branded synthetic operators through invitations, configures distinct services/stations/qualified rotas from the same build, and reports both as demo-ready. A browser walkthrough confirms the platform list and five-item checklist. Details in VERIFICATION.md and HANDOVER.md.
 
-Outstanding: production PostgreSQL adapter and migrations, managed identity/email verification/password reset/MFA, operator onboarding and branding editor, managed private object storage, iOS/Android clients, membership/booking/commerce/workforce integrations and deployment. Do not present the fixed synthetic clubs as completed self-service operator onboarding.
+Outstanding: non-production PostgreSQL migration rehearsal, production identity/email verification/staff MFA, managed private object storage, iOS/Android clients, operator lifecycle and offboarding/export rules, production payment/POS/payroll integrations, deployment and operational release gates. “Demo ready” is deliberately narrower than live readiness.
 
-Next: finish production datastore/identity design and onboarding, then managed photo storage and the shared native member client. No RoundMate infrastructure is used.
+Next: implement the operator lifecycle states and their access/export rules, then rehearse the complete migration stack in non-production PostgreSQL. No RoundMate infrastructure is used.
 
-The duplicate DogClubPlatform directory is retained temporarily and is no longer the working checkout. Earlier Downloads and RoundMate planning copies are snapshots. New implementation changes are local and have not been pushed.
+The canonical checkout remains `/Users/ianring/Documents/ChatGPT/The Dog club`. Earlier Downloads and RoundMate planning copies are snapshots.
 
 Photo increment: one normalised image per dog, additive database migration, metadata removal, direct-image permission checks and no-store responses. Browser-tested invalid-file recovery, valid upload/preview, public rendering and removal. Changes remain local and unpushed.

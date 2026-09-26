@@ -50,7 +50,7 @@ The local database is created automatically in `.data/postgres` and persists acr
 
 Account recovery stays support-assisted in the local demo. A deployed environment can send one-time recovery links to the stored account email by configuring `RECOVERY_EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `RECOVERY_EMAIL_FROM` and an HTTPS `APP_URL`. The From address must use a domain verified with Resend. Provider acceptance is recorded for support, but is not represented as proof of inbox delivery. See [account recovery](docs/ACCOUNT_RECOVERY.md).
 
-See [implementation scope](docs/IMPLEMENTATION.md) and [verification](docs/VERIFICATION.md). Photo upload, replacement and removal now work with the profile’s visibility rules. JPEG, PNG and still WebP are supported; HEIC and animated images are not. See [photo design](docs/PHOTO_UPLOADS.md). Managed production storage, native mobile clients, operator onboarding and live integrations remain outstanding.
+See [implementation scope](docs/IMPLEMENTATION.md) and [verification](docs/VERIFICATION.md). Photo upload, replacement and removal now work with the profile’s visibility rules. JPEG, PNG and still WebP are supported; HEIC and animated images are not. See [photo design](docs/PHOTO_UPLOADS.md). Secure operator onboarding and a computed demo-readiness checklist are implemented locally. Managed production storage, native mobile clients, operator lifecycle enforcement and live integrations remain outstanding.
 
 GitHub repository: [ring120768/The-Dog-Club](https://github.com/ring120768/The-Dog-Club).
 
@@ -61,3 +61,9 @@ Managers can assign an existing club member as manager, groomer, reception or ca
 Every operator receives a default venue location during onboarding. Managers and authorised staff can add locations, choose the location and qualified groomer for a dated shift, and retire or restore services and stations. Availability only combines an active groomer, published shift and station at the same venue. A location with active stations or published shifts cannot be retired accidentally.
 
 Managers and delegated staff administrators can also issue a hashed, single-use 72-hour staff invitation carrying the intended role, permissions and qualifications. A new account and its ordinary club membership, staff access, qualifications and audit event are created atomically; an existing account must sign in before accepting. No invitation email is sent yet. Private care and daily reception access remain manager-only until their narrower permission slices are reviewed and tested. Production remains untouched.
+
+## Operator demo readiness
+
+The platform console now reports five evidence-based setup checks for every operator: manager access, an active venue, an active grooming service, an active station and a published shift with a qualified active groomer. “Demo ready” means those five synthetic walkthrough conditions pass. It does not mean the operator is approved for live use, connected to a production payment provider or ready for an app-store release.
+
+Automated acceptance provisions two differently branded operators through secure invitations, then gives each a distinct service, station and qualified rota using the same application build. No manual SQL or source-code fork is used.
