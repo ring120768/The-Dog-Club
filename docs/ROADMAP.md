@@ -103,9 +103,9 @@ Next execution milestone: independent project foundation, tenant isolation, bran
 
 ## Implementation checkpoint — 25/09/2026
 
-First local web increment implemented. See [project status](PROJECT_STATUS.md) and [verification evidence](VERIFICATION.md). Stage 1 remains in progress: operator onboarding, production identity/datastore and location/resource configuration are outstanding. Stage 2 has an initial web dog-profile slice; photo storage and iOS/Android clients are not implemented.
+The local web foundation now includes secure operator/member/staff invitations, tenant-scoped venue/resource setup, configurable branding and a computed operator demo-readiness checklist. Automated acceptance provisions two distinct synthetic operators and configures each without SQL or a code fork. Stage 1 remains in progress because production identity/datastore rehearsal, operator lifecycle enforcement and deployment controls are outstanding. Stage 2 has a working web dog-profile and controlled-photo slice; iOS/Android clients are not implemented.
 
 
 ### Photo increment — 25/09/2026
 
-Local profile photo upload, replacement/removal and audience-based image access are implemented and verified. See [photo design](PHOTO_UPLOADS.md). The earlier photo-storage gap is now limited to managed production storage; native clients and operator onboarding remain outstanding.
+Local profile photo upload, replacement/removal and audience-based image access are implemented and verified. See [photo design](PHOTO_UPLOADS.md). The earlier photo-storage gap is now limited to managed production storage; native clients remain outstanding.

@@ -162,3 +162,11 @@ Branch `codex/staff-invitations`, stacked on `codex/staff-permissions-inventory`
 The staff workspace now creates, lists and revokes these invitations. Links are shown once for private sharing; no email-delivery claim is made. Invalid or cross-tenant qualifications, cross-tenant issuers, unauthenticated existing-account claims and attempts to wrap a core manager in a staff record are rejected.
 
 Validation: TypeScript and all 89 tests pass. The three staff-invitation tests cover token hashing, atomic membership/access/qualification/audit creation, existing-account authentication, delegated staff-admin authority and tenant/service boundaries. Local browser acceptance created a synthetic groomer invitation with one qualification and showed it as awaiting acceptance; no console warnings/errors and no external email. Production remains untouched.
+
+## Operator demo-readiness checkpoint — 26/09/2026
+
+Branch `codex/operator-readiness`, stacked on `codex/staff-invitations`. The platform console computes five configuration checks from persisted tenant data: manager access, active venue, active grooming service, active station and a published shift with an active qualified groomer at the matching venue. It exposes configuration counts only and does not return member, dog, care, booking or payroll records. The UI labels a passing operator “Demo ready” and explicitly separates that status from payment-provider connection, production approval and app-store release.
+
+Validation: TypeScript and all 91 tests pass. New acceptance coverage provisions two differently branded synthetic operators through secure invitations and configures a distinct service, station and qualified rota for each through the same application service layer—no SQL or source-code fork. A tenant member cannot read readiness. Local browser acceptance shows Coast at 1/5 and both Willow and Pavilion Pooch at 5/5, then verifies the complete Willow checklist. Production schema, data and services remain untouched.
+
+Next: implement trial, onboarding, active, restricted and closed operator lifecycle states with explicit access/export behaviour before describing WL-06 as complete. Rehearse the full stacked migration sequence in non-production PostgreSQL before any live rollout.

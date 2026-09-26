@@ -2,10 +2,21 @@ import Link from "next/link";
 import { requireAccount } from "@/lib/auth";
 import { database } from "@/lib/database";
 import { platformClubs } from "@/lib/branding";
+import { operatorReadinessForPlatform } from "@/lib/operator-readiness";
 import { ClubMark } from "@/components/club-mark";
 export default async function PlatformHome() {
   const account = await requireAccount();
-  const clubs = await platformClubs(await database(), account.id);
+  const db = await database();
+  const clubs = await platformClubs(db, account.id);
+  const readiness = new Map(
+    (
+      await operatorReadinessForPlatform(
+        db,
+        account.id,
+        clubs.map((club) => club.id),
+      )
+    ).map((item) => [item.club_id, item]),
+  );
   return (
     <main className="platform-main">
       <div className="platform-heading">
@@ -26,21 +37,34 @@ export default async function PlatformHome() {
         </div>
       </div>
       <div className="operator-grid">
-        {clubs.map((club) => (
-          <article className="operator-card" key={club.id}>
-            <div className="operator-mark" style={{ background: club.colour }}>
-              <ClubMark emblem={club.emblem} size={36} />
-            </div>
-            <div>
-              <h2>{club.name}</h2>
-              <p>{club.location}</p>
-              <small>/club/{club.slug}</small>
-            </div>
-            <Link className="inline-link" href={`/platform/${club.slug}`}>
-              Manage branding →
-            </Link>
-          </article>
-        ))}
+        {clubs.map((club) => {
+          const progress = readiness.get(club.id)!;
+          return (
+            <article className="operator-card" key={club.id}>
+              <div
+                className="operator-mark"
+                style={{ background: club.colour }}
+              >
+                <ClubMark emblem={club.emblem} size={36} />
+              </div>
+              <div>
+                <h2>{club.name}</h2>
+                <p>{club.location}</p>
+                <small>/club/{club.slug}</small>
+                <span
+                  className={`readiness-status ${progress.ready ? "ready" : "setup"}`}
+                >
+                  {progress.ready
+                    ? "Demo ready"
+                    : `${progress.complete}/${progress.total} setup checks`}
+                </span>
+              </div>
+              <Link className="inline-link" href={`/platform/${club.slug}`}>
+                Review operator →
+              </Link>
+            </article>
+          );
+        })}
       </div>
       <div className="coming-next">
         <p>
