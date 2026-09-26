@@ -178,3 +178,15 @@ Branch `codex/operator-lifecycle`, stacked on `codex/operator-readiness`. Adds o
 Validation: TypeScript and all 95 tests pass. Four lifecycle tests cover onboarding access, readiness and external activation gates, platform-only audit history, restricted growth with retained records, closure, direct profile-write denial and irreversible closure. Local browser acceptance shows Willow’s Trial controls and rejects Coast activation at 1/5 readiness. The client/server lifecycle contract is split so no database module reaches the browser bundle. Production remains untouched.
 
 Next: implement a permissioned per-operator export plus tested restore/offboarding procedure, then rehearse the full migration stack in non-production PostgreSQL before any live rollout.
+
+## Operator export and restore checkpoint — 26/09/2026
+
+Branch `codex/operator-export-restore`, stacked on `codex/operator-lifecycle`. The platform-owner console downloads a versioned, tenant-bound JSON archive with a record count and SHA-256 integrity value. It includes operator configuration and operational history, including binary dog photographs, while excluding passwords, sessions, invitation/recovery tokens, admission pass bearer codes, hosted Stripe URLs and raw Stripe webhook payloads. Export and completed restore operations are audited.
+
+Restore is intentionally engineer-operated. It requires a clean migrated destination and exact, separately verified account identities; credentials never travel in the archive. Restore is transactional, refuses an existing operator ID, recreates admission passes with replacement codes in an inactive state and advances restored identity sequences. The offboarding runbook is in `docs/OPERATOR_EXPORT_AND_RESTORE.md`; this feature never deletes live data.
+
+Validation: TypeScript and all 98 tests pass. The export suite covers platform-only access, tenant boundaries, credential and hosted-URL removal, tamper detection, dog-photo restoration, inactive replacement admission passes, a complete isolated-database restore and rollback when an identity prerequisite is missing. The authenticated local Willow download returned HTTP 200 and the platform panel rendered without errors.
+
+The complete 18-migration stack was also applied to a clean disposable Supabase PostgreSQL 17 container as `supabase_admin`, producing 52 public tables. Effective `club_app` grants were inspected and all 98 tests passed through the rollback-only shared-PostgreSQL harness; final counts showed zero synthetic clubs and export events. The lower-privilege `postgres` login correctly failed to create the migration ledger because it does not own `public`, so deployment must use the approved migration-owner connection. See `docs/NON_PRODUCTION_POSTGRES_REHEARSAL.md`. Production remains untouched.
+
+Next: begin the next approved product slice. Community moderation/search and the iOS/Android shared-client foundation are the strongest code-owned gaps; live email, Stripe, POS and payroll proof still depend on provider credentials and operator decisions. Do not describe the disposable rehearsal as managed-cloud staging approval.

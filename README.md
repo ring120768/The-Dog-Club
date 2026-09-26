@@ -50,7 +50,7 @@ The local database is created automatically in `.data/postgres` and persists acr
 
 Account recovery stays support-assisted in the local demo. A deployed environment can send one-time recovery links to the stored account email by configuring `RECOVERY_EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, `RECOVERY_EMAIL_FROM` and an HTTPS `APP_URL`. The From address must use a domain verified with Resend. Provider acceptance is recorded for support, but is not represented as proof of inbox delivery. See [account recovery](docs/ACCOUNT_RECOVERY.md).
 
-See [implementation scope](docs/IMPLEMENTATION.md) and [verification](docs/VERIFICATION.md). Photo upload, replacement and removal now work with the profile’s visibility rules. JPEG, PNG and still WebP are supported; HEIC and animated images are not. See [photo design](docs/PHOTO_UPLOADS.md). Secure operator onboarding and a computed demo-readiness checklist are implemented locally. Managed production storage, native mobile clients, operator lifecycle enforcement and live integrations remain outstanding.
+See [implementation scope](docs/IMPLEMENTATION.md) and [verification](docs/VERIFICATION.md). Photo upload, replacement and removal now work with the profile’s visibility rules. JPEG, PNG and still WebP are supported; HEIC and animated images are not. See [photo design](docs/PHOTO_UPLOADS.md). Secure operator onboarding, audited lifecycle controls, a computed demo-readiness checklist and a platform-owned verified export/restore path are implemented locally. The full stack has been rehearsed against disposable PostgreSQL 17. Managed production storage, native mobile clients and live integrations remain outstanding.
 
 GitHub repository: [ring120768/The-Dog-Club](https://github.com/ring120768/The-Dog-Club).
 
@@ -69,3 +69,5 @@ The platform console now reports five evidence-based setup checks for every oper
 Automated acceptance provisions two differently branded operators through secure invitations, then gives each a distinct service, station and qualified rota using the same application build. No manual SQL or source-code fork is used.
 
 Platform owners can move operators through onboarding, trial, active, restricted and closed states using audited transition rules. Restriction preserves existing service obligations while blocking new invitations; closure removes ordinary tenant and public-profile access without deleting records. See [operator lifecycle](docs/OPERATOR_LIFECYCLE.md).
+
+Platform owners can also download a tenant-bound JSON archive with a record count and SHA-256 integrity value. Credentials, bearer tokens, hosted Stripe URLs and raw webhooks are excluded; restore requires separately verified identities and has been rehearsed against an isolated database. See [operator export and restore](docs/OPERATOR_EXPORT_AND_RESTORE.md) and [PostgreSQL rehearsal](docs/NON_PRODUCTION_POSTGRES_REHEARSAL.md).

@@ -98,6 +98,28 @@ export default async function Operator({
         current={club.operator_state}
         events={lifecycle}
       />
+      <section className="readiness-panel" aria-labelledby="export-heading">
+        <div className="readiness-heading">
+          <div>
+            <span className="eyebrow">PORTABILITY &amp; OFFBOARDING</span>
+            <h2 id="export-heading">Download a verified operator archive.</h2>
+          </div>
+        </div>
+        <p className="readiness-note">
+          The JSON archive contains this operator’s configuration and
+          operational records, including dog photographs. Passwords, sessions,
+          invitation and recovery tokens, admission pass codes, hosted Stripe
+          URLs and raw payment webhooks are excluded. Restores require
+          separately verified account identities.
+        </p>
+        <a
+          className="button"
+          href={`/api/platform/operators/${encodeURIComponent(club.id)}/export`}
+          download
+        >
+          Download operator archive
+        </a>
+      </section>
       <BrandForm club={club} platform />
       <StripeAccountForm club={club.id} slug={slug} current={paymentAccount} />
     </main>
