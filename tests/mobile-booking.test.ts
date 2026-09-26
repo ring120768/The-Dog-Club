@@ -7,6 +7,7 @@ import {
   cancelBooking,
   createBookingSetup,
   reserveBooking,
+  rescheduleBooking,
 } from "../src/lib/bookings";
 import { initialise, type Db } from "../src/lib/database";
 import {
@@ -127,6 +128,82 @@ test("a mobile choice can be confirmed with an eligible membership credit", asyn
     (await mobileBookingOptionsFor(db, "alice", club)).membership
       ?.remainingGroomingCredits,
     1,
+  );
+});
+
+test("a mobile booking can move atomically without changing its commercial terms", async () => {
+  const before = await mobileMemberHomeFor(db, "alice", club);
+  assert.equal(before.upcomingBookings.length, 1);
+  const booking = before.upcomingBookings[0];
+  const availability = await availabilityFor(
+    db,
+    "alice",
+    club,
+    dog,
+    service,
+    day,
+    booking.id,
+  );
+  const replacement = availability.slots.find(
+    (slot) =>
+      new Date(slot.starts_at).getTime() !==
+      new Date(booking.startsAt).getTime(),
+  );
+  assert.ok(replacement);
+
+  await rescheduleBooking(db, "alice", club, {
+    booking_id: booking.id,
+    starts_at: replacement.starts_at,
+  });
+
+  const after = await mobileMemberHomeFor(db, "alice", club);
+  assert.equal(after.upcomingBookings.length, 1);
+  assert.equal(after.upcomingBookings[0].id, booking.id);
+  assert.equal(
+    new Date(after.upcomingBookings[0].startsAt).toISOString(),
+    new Date(replacement.starts_at).toISOString(),
+  );
+  assert.equal(after.upcomingBookings[0].groomingCreditsApplied, 1);
+  assert.equal(after.upcomingBookings[0].amountDuePence, 0);
+  assert.equal(
+    (await mobileBookingOptionsFor(db, "alice", club)).membership
+      ?.remainingGroomingCredits,
+    1,
+  );
+  assert.deepEqual(
+    (
+      await db.query<{ action: string }>(
+        "SELECT action FROM booking_events WHERE booking_id=$1 ORDER BY id",
+        [booking.id],
+      )
+    ).rows.map((event) => event.action),
+    ["booking.confirmed", "booking.rescheduled"],
+  );
+});
+
+test("a failed mobile reschedule leaves the existing booking unchanged", async () => {
+  const before = (await mobileMemberHomeFor(db, "alice", club))
+    .upcomingBookings[0];
+  await assert.rejects(
+    rescheduleBooking(db, "alice", club, {
+      booking_id: before.id,
+      starts_at: "2099-12-08T18:00:00.000Z",
+    }),
+    /unavailable/,
+  );
+  await assert.rejects(
+    rescheduleBooking(db, "coast-member", club, {
+      booking_id: before.id,
+      starts_at: "2099-12-08T10:30:00.000Z",
+    }),
+    /Booking unavailable/,
+  );
+  const after = (await mobileMemberHomeFor(db, "alice", club))
+    .upcomingBookings[0];
+  assert.equal(after.id, before.id);
+  assert.equal(
+    new Date(after.startsAt).toISOString(),
+    new Date(before.startsAt).toISOString(),
   );
 });
 

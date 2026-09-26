@@ -244,8 +244,13 @@
         padding-top: 9px;
         border-top: 1px solid rgb(35 84 72 / 12%);
       }
-      .booking-cancel {
+      .booking-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
         margin-top: 8px;
+      }
+      .booking-actions button {
         padding: 8px 12px;
         font-size: 0.82rem;
       }
@@ -425,7 +430,7 @@
           </button>
           <span class="eyebrow">Grooming</span>
         </div>
-        <h2>Book a groom</h2>
+        <h2 id="booking-heading">Book a groom</h2>
         <form id="booking-form">
           <label>Dog<select id="booking-dog" required></select></label>
           <label>Service<select id="booking-service" required></select></label>
@@ -436,20 +441,25 @@
           </button>
           <p id="booking-slot-empty" class="muted"></p>
           <div id="booking-slots" class="slot-list"></div>
-          <label id="booking-credit-choice" class="check-row hidden">
-            <input id="booking-credit" type="checkbox" />
-            <span id="booking-credit-copy"></span>
-          </label>
-          <p id="booking-payment-note" class="muted"></p>
-          <div class="terms-box">
-            <strong>Cancellation terms</strong>
-            <p id="booking-terms"></p>
-            <label class="check-row">
-              <input id="booking-terms-accepted" type="checkbox" required />
-              <span>I accept these cancellation terms.</span>
+          <p id="booking-reschedule-note" class="muted hidden"></p>
+          <div id="booking-commercial">
+            <label id="booking-credit-choice" class="check-row hidden">
+              <input id="booking-credit" type="checkbox" />
+              <span id="booking-credit-copy"></span>
             </label>
+            <p id="booking-payment-note" class="muted"></p>
+            <div class="terms-box">
+              <strong>Cancellation terms</strong>
+              <p id="booking-terms"></p>
+              <label class="check-row">
+                <input id="booking-terms-accepted" type="checkbox" required />
+                <span>I accept these cancellation terms.</span>
+              </label>
+            </div>
           </div>
-          <button class="primary" type="submit">Confirm booking</button>
+          <button id="booking-submit" class="primary" type="submit">
+            Confirm booking
+          </button>
         </form>
         <p id="booking-setup-empty" class="message" role="status"></p>
         <p id="booking-message" class="message" role="alert"></p>

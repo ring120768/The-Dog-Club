@@ -15,6 +15,8 @@ export type MobileMemberHome = {
   } | null;
   upcomingBookings: {
     id: string;
+    dogId: string;
+    serviceId: string;
     dogName: string;
     serviceName: string;
     startsAt: string;
@@ -58,13 +60,15 @@ export async function mobileMemberHomeFor(
     const bookings = (
       await tx.query<{
         id: string;
+        dog_id: string;
+        service_id: string;
         dog_name: string;
         service_name: string;
         starts_at: string;
         amount_due_pence_snapshot: number;
         grooming_credits_applied: number;
       }>(
-        `SELECT b.id,d.name AS dog_name,s.name AS service_name,b.starts_at,
+        `SELECT b.id,b.dog_id,b.service_id,d.name AS dog_name,s.name AS service_name,b.starts_at,
          b.amount_due_pence_snapshot,b.grooming_credits_applied
          FROM grooming_bookings b
          JOIN dogs d ON d.club_id=b.club_id AND d.id=b.dog_id
@@ -103,6 +107,8 @@ export async function mobileMemberHomeFor(
         : null,
       upcomingBookings: bookings.map((booking) => ({
         id: booking.id,
+        dogId: booking.dog_id,
+        serviceId: booking.service_id,
         dogName: booking.dog_name,
         serviceName: booking.service_name,
         startsAt: booking.starts_at,

@@ -53,3 +53,19 @@ test("mobile upcoming bookings can be cancelled after explicit confirmation", as
   assert.match(script, /method:\s*"DELETE"/);
   assert.match(script, /grooming credit has been restored/);
 });
+
+test("mobile upcoming bookings can move to a live replacement slot", async () => {
+  const [shell, script] = await Promise.all([
+    readFile(new URL("../mobile-shell/index.html", import.meta.url), "utf8"),
+    readFile(new URL("../mobile-shell/app.js", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(script, /Change time/);
+  assert.match(script, /query\.set\("booking", state\.rescheduleBooking\.id\)/);
+  assert.match(script, /method: rescheduling \? "PATCH" : "POST"/);
+  assert.match(shell, /id="booking-reschedule-note"/);
+  assert.match(
+    script,
+    /original price, grooming credits and cancellation terms stay unchanged/,
+  );
+});
