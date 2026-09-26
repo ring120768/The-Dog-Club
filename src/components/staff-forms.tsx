@@ -1,6 +1,7 @@
 "use client";
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { deactivateStaffAction, saveStaffAction } from "@/app/staff-actions";
+import { inviteAction } from "@/app/onboarding-actions";
 import type { StaffRole } from "@/lib/staff";
 
 function Result({ state }: { state: { error?: string; success?: string } }) {
@@ -17,6 +18,85 @@ function Result({ state }: { state: { error?: string; success?: string } }) {
         </p>
       )}
     </>
+  );
+}
+
+export function StaffInvitationForm({
+  club,
+  services,
+}: {
+  club: string;
+  services: { id: string; name: string; active: boolean }[];
+}) {
+  const [state, action, pending] = useActionState(
+    inviteAction.bind(null, "staff", club),
+    {},
+  );
+  const [origin, setOrigin] = useState("");
+  useEffect(() => setOrigin(window.location.origin), []);
+  return (
+    <form action={action} className="profile-form booking-panel">
+      <fieldset disabled={pending} className="editor-fields">
+        <label>
+          Staff email
+          <input name="managerEmail" type="email" required maxLength={254} />
+        </label>
+        <label>
+          Operational role
+          <select name="role" defaultValue="reception">
+            <option value="manager">Manager</option>
+            <option value="groomer">Groomer</option>
+            <option value="reception">Reception</option>
+            <option value="cafe">Cafe</option>
+          </select>
+        </label>
+        <fieldset>
+          <legend>Permissions</legend>
+          <label className="terms-check">
+            <input type="checkbox" name="can_manage_staff" value="yes" />
+            <span>Manage staff access</span>
+          </label>
+          <label className="terms-check">
+            <input
+              type="checkbox"
+              name="can_manage_booking_setup"
+              value="yes"
+            />
+            <span>Manage services, stations, locations and shifts</span>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Grooming qualifications</legend>
+          {services.map((service) => (
+            <label className="terms-check" key={service.id}>
+              <input type="checkbox" name="service_ids" value={service.id} />
+              <span>
+                {service.name}
+                {service.active ? "" : " (retired)"}
+              </span>
+            </label>
+          ))}
+        </fieldset>
+      </fieldset>
+      <p>
+        Expires after 72 hours. Share privately with the invited person. No
+        email is sent automatically.
+      </p>
+      <Result state={state} />
+      {state.token && (
+        <label>
+          Private staff invitation link
+          <input
+            readOnly
+            value={`${origin}/join#${state.token}`}
+            onFocus={(event) => event.target.select()}
+          />
+        </label>
+      )}
+      <button className="button" disabled={pending}>
+        {pending ? "Creating…" : "Create staff invitation"}
+      </button>
+    </form>
   );
 }
 

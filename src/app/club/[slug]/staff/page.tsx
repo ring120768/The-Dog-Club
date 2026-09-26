@@ -4,7 +4,9 @@ import { requireAccount } from "@/lib/auth";
 import { database } from "@/lib/database";
 import { clubsFor } from "@/lib/dogs";
 import { staffAdminFor } from "@/lib/staff";
-import { StaffAccessForm } from "@/components/staff-forms";
+import { listInvites } from "@/lib/onboarding";
+import { StaffAccessForm, StaffInvitationForm } from "@/components/staff-forms";
+import { InvitationList } from "@/components/invitation-list";
 
 const london = (value: string) =>
   new Intl.DateTimeFormat("en-GB", {
@@ -26,19 +28,21 @@ export default async function StaffPage({
   );
   if (!club) notFound();
   const admin = await staffAdminFor(db, account.id, club.id);
+  const invites = await listInvites(db, account.id, "staff", club.id);
   return (
     <main className="form-page booking-setup-page">
       <Link href={`/club/${slug}/operations`}>← Manager overview</Link>
       <span className="eyebrow">STAFF ACCESS</span>
       <h1>Give each person only the access they need.</h1>
       <p>
-        Assign operational roles to existing club members, record grooming
-        qualifications and deactivate access without deleting history. Invite a
-        person as a member first if they are not listed.
+        Invite staff with their intended role, permissions and grooming
+        qualifications. Existing club members can also be assigned below.
       </p>
-      <Link className="inline-link" href={`/club/${slug}/invitations`}>
-        Invite a new person
-      </Link>
+      <section>
+        <h2>Invite staff</h2>
+        <StaffInvitationForm club={club.id} services={admin.services} />
+        <InvitationList items={invites} />
+      </section>
       <section>
         <h2>Owner and manager accounts</h2>
         {admin.people
