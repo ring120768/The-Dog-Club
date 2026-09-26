@@ -6,7 +6,9 @@ The repository now contains generated Capacitor 8.4.3 projects in `ios/` and `an
 
 This checkpoint proves that one source repository can produce both native containers. It does not claim that the web member journey is already a store-ready native experience. Authentication, tenant selection, camera/library upload, push notifications, deep links, accessibility, offline behaviour, account deletion, privacy manifests, final icons/screenshots, signing and store review remain acceptance work.
 
-The next slices add an end-to-end development journey in that shared shell: a member can enter an approved server address, sign in, choose one of their available clubs, view the dog profiles they are permitted to see, open a profile with its audience label and photograph, and edit profiles they own or have delegated care permission for. The client receives a minimal allowlisted projection and never receives owner account IDs, care notes, password hashes or stored session hashes.
+The next slices add an end-to-end development journey in that shared shell: a member can enter an approved server address, sign in, choose one of their available clubs, view the dog profiles they are permitted to see, open a profile with its audience label and photograph, edit profiles they own or have delegated care permission for, and replace or remove their photograph. The client receives a minimal allowlisted projection and never receives owner account IDs, care notes, password hashes or stored session hashes.
+
+Photo selection uses the operating system's document picker with no camera capture attribute and no broad photo-library plugin permission. The server reads the upload as a bounded stream, rejects more than 5 MB, validates decoded dimensions, removes metadata and stores a resized still WebP. Camera capture remains a separate future capability requiring platform usage descriptions and denial/retry acceptance.
 
 Mobile sessions use 256-bit random bearer tokens. Only a SHA-256 digest is stored server-side, sessions expire after eight hours and sign-out revokes the current session immediately. The client keeps the bearer token in JavaScript memory only, so closing or refreshing the app signs the member out. This is deliberately conservative until Keychain/Keystore-backed storage, biometric access and device-loss handling have been reviewed together.
 
@@ -35,4 +37,4 @@ Java 25 is installed on the development machine but is too new for the generated
 
 ## Next mobile vertical slice
 
-Add server-authorised photo selection, replacement and removal, then exercise the complete journey on one iOS simulator and one Android emulator against a reviewed HTTPS non-production deployment. Add camera/library permissions only when their privacy text and server-side upload boundary are ready. Decide shared marketplace listing versus operator-branded releases before creating signing identities or promising individual store listings.
+Exercise the complete journey on one iOS simulator and one Android emulator against a reviewed HTTPS non-production deployment, then decide whether an in-app camera is justified. Add camera permissions only with reviewed privacy text and denial/retry behaviour. Decide shared marketplace listing versus operator-branded releases before creating signing identities or promising individual store listings.

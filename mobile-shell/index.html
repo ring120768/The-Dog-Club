@@ -226,6 +226,17 @@
         display: block;
         margin-bottom: 12px;
       }
+      .photo-controls {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid rgb(35 84 72 / 12%);
+        text-align: left;
+      }
+      .photo-controls small {
+        display: block;
+        color: #60746f;
+        line-height: 1.4;
+      }
       .message {
         min-height: 1.5em;
         margin: 12px 0 0;
@@ -331,6 +342,25 @@
           <button id="edit-profile" class="primary hidden" type="button">
             Edit profile
           </button>
+          <div id="photo-controls" class="photo-controls hidden">
+            <form id="photo-form">
+              <label
+                >Choose a new photograph<input
+                  id="photo-file"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  required
+              /></label>
+              <small
+                >JPEG, PNG or still WebP, up to 5 MB. Location and other image
+                metadata are removed before saving.</small
+              >
+              <button class="primary" type="submit">Save photograph</button>
+            </form>
+            <button id="remove-photo" class="secondary hidden" type="button">
+              Remove photograph
+            </button>
+          </div>
         </div>
         <p id="profile-message" class="message" role="alert"></p>
       </section>

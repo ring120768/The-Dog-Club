@@ -65,6 +65,24 @@
     if (!response.ok) throw new Error("This photo is not available.");
     return response.blob();
   }
+  async function changePhoto(method, file) {
+    const response = await fetch(
+      `${state.server}/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/dogs/${encodeURIComponent(state.dog.id)}/photo`,
+      {
+        method,
+        headers: {
+          Authorization: `Bearer ${state.token}`,
+          ...(file ? { "Content-Type": "application/octet-stream" } : {}),
+        },
+        body: file,
+      },
+    );
+    if (response.status === 401) logout(false);
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.error || "The photograph could not be saved.");
+    }
+  }
   function clearPhoto() {
     if (state.photoUrl) URL.revokeObjectURL(state.photoUrl);
     state.photoUrl = "";
@@ -159,6 +177,11 @@
             : "Private profile";
       byId("profile-owner").classList.toggle("hidden", !dog.canManage);
       byId("edit-profile").classList.toggle("hidden", !dog.canManage);
+      byId("photo-controls").classList.toggle("hidden", !dog.canManage);
+      byId("remove-photo").classList.toggle(
+        "hidden",
+        !dog.canManage || !dog.photoUrl,
+      );
       const image = byId("profile-photo");
       const fallback = byId("profile-avatar");
       fallback.className = `profile-photo avatar ${dog.avatar}`;
@@ -263,6 +286,43 @@
       message.textContent = error.message;
     } finally {
       setBusy(form, false);
+    }
+  });
+  byId("photo-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const file = byId("photo-file").files[0];
+    const message = byId("profile-message");
+    message.textContent = "";
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      message.textContent = "Choose a photo no larger than 5 MB.";
+      return;
+    }
+    setBusy(form, true);
+    try {
+      await changePhoto("PUT", file);
+      byId("photo-file").value = "";
+      await openDog(state.dog.id);
+    } catch (error) {
+      message.textContent = error.message;
+    } finally {
+      setBusy(form, false);
+    }
+  });
+  byId("remove-photo").addEventListener("click", async (event) => {
+    if (!confirm("Remove this photograph from the profile?")) return;
+    const button = event.currentTarget;
+    const message = byId("profile-message");
+    message.textContent = "";
+    button.disabled = true;
+    try {
+      await changePhoto("DELETE");
+      await openDog(state.dog.id);
+    } catch (error) {
+      message.textContent = error.message;
+    } finally {
+      button.disabled = false;
     }
   });
   byId("sign-out").addEventListener("click", () => logout());

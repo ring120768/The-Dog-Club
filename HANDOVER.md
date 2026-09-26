@@ -228,3 +228,13 @@ The editor enforces the same server-side length and enum schema as the web app. 
 Validation: TypeScript and all 105 isolated tests pass, including explicit PATCH preflight coverage and the existing ownership, household-permission, tenant-isolation, validation and audit tests exercised by the shared service. Capacitor sync and both native debug builds pass. Production remains untouched.
 
 Next: design the photo upload/replace/remove boundary with iOS library/camera usage descriptions, Android permission behaviour, the existing 5 MB/20-megapixel normalisation limits and denial/retry UX before adding native media access.
+
+## Mobile dog-photo editing checkpoint — 26/09/2026
+
+Branch `codex/mobile-dog-photo-edit`, stacked on `codex/mobile-dog-edit`. Owners and household adults with dog-care permission can select a JPEG, PNG or still WebP through the operating system picker, replace the current profile photograph and remove it after confirmation. This deliberately uses no capture attribute, camera plugin or broad photo-library permission. Camera access remains a separate capability requiring iOS/Android privacy copy and denial/retry acceptance.
+
+The upload route authenticates the bearer session, distinguishes unauthenticated from unavailable records, re-checks live tenant and `can_manage` authority, and reads request bytes through a hard 5 MB streaming bound even when content length is absent. The established image pipeline validates actual bytes and decoded pixels, auto-rotates, resizes, strips metadata and stores still WebP. Replacement/removal stays atomic with the existing profile and audit service; another member receives 404.
+
+Validation: TypeScript and all 108 isolated tests pass. Three new tests cover exact bounded bytes, early rejection from declared size and streamed over-limit rejection. A live localhost round trip replaced Bertie's synthetic photograph, fetched the resulting 23,194-byte WebP, denied Bea's replacement with 404, removed the photograph and confirmed the profile URL cleared. The synthetic local record was returned to its original no-photo state. Capacitor sync and both native debug builds pass. Production remains untouched.
+
+Next: run the complete member journey interactively on named iOS and Android simulators against a reviewed HTTPS non-production endpoint. Then address secure Keychain/Keystore session persistence and device-level revocation before signing or distribution.
