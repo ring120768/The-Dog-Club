@@ -41,6 +41,11 @@ export default async function PlatformHome({
           <p>Set up operators and give each club its own identity.</p>
         </div>
         <div className="platform-actions">
+          {isDemoMode() && (
+            <Link className="inline-link" href="/platform/demo">
+              Run guided demo
+            </Link>
+          )}
           <Link className="inline-link" href="/platform/recovery">
             Recovery requests
           </Link>
