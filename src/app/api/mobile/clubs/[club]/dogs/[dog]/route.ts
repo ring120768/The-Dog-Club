@@ -15,7 +15,7 @@ export function OPTIONS(request: Request) {
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ club: string }> },
+  { params }: { params: Promise<{ club: string; dog: string }> },
 ) {
   const forbidden = rejectDisallowedMobileOrigin(request);
   if (forbidden) return forbidden;
@@ -23,32 +23,38 @@ export async function GET(
   const account = await mobileAccount(db, request.headers.get("authorization"));
   if (!account)
     return mobileJson(request, { error: "Sign in required." }, { status: 401 });
-  const { club: slug } = await params;
+  const { club: slug, dog: dogId } = await params;
   const club = (await clubsFor(db, account.id)).find(
     (item) => item.slug === slug,
   );
   if (!club)
     return mobileJson(
       request,
-      { error: "Club was not found." },
+      { error: "Dog profile was not found." },
       { status: 404 },
     );
-  const dogs = (await dogsFor(db, account.id, club.id)).map((dog) => ({
-    id: dog.id,
-    name: dog.name,
-    breed: dog.breed,
-    bio: dog.bio,
-    avatar: dog.avatar,
-    audience: dog.audience,
-    canManage: dog.can_manage,
-    canBook: dog.can_book,
-    hasPhoto: Boolean(dog.photo_id),
-    photoUrl: dog.photo_id
-      ? `/api/mobile/clubs/${encodeURIComponent(club.slug)}/dogs/${encodeURIComponent(dog.id)}/photos/${encodeURIComponent(dog.photo_id)}`
-      : null,
-  }));
+  const dog = (await dogsFor(db, account.id, club.id)).find(
+    (item) => item.id === dogId,
+  );
+  if (!dog)
+    return mobileJson(
+      request,
+      { error: "Dog profile was not found." },
+      { status: 404 },
+    );
   return mobileJson(request, {
-    club: { slug: club.slug, name: club.name },
-    dogs,
+    dog: {
+      id: dog.id,
+      name: dog.name,
+      breed: dog.breed,
+      bio: dog.bio,
+      avatar: dog.avatar,
+      audience: dog.audience,
+      canManage: dog.can_manage,
+      canBook: dog.can_book,
+      photoUrl: dog.photo_id
+        ? `/api/mobile/clubs/${encodeURIComponent(club.slug)}/dogs/${encodeURIComponent(dog.id)}/photos/${encodeURIComponent(dog.photo_id)}`
+        : null,
+    },
   });
 }
