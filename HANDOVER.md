@@ -1,6 +1,6 @@
 # Handover — getting the live site working
 
-Updated 25/09/2026
+Updated 26/09/2026
 
 Live activation completed on 25/09/2026 after the initial verification. Production now has DOGCLUB_DB=supabase and a sensitive DATABASE_URL (production only). Deployment `dpl_JBmSJCdR6jy351PK6VeDWsis93Wf` is READY and serves https://the-dog-club-psi.vercel.app from commit `5744bc2`.
 
@@ -68,3 +68,15 @@ The known-answer browser walkthrough passed on 25/09/2026 using local synthetic 
 Validation: TypeScript check and all 43 isolated tests pass. The seven booking tests cover buffer/break calculations, price snapshots, concurrent confirmation, cancellation/audit, household and tenant isolation, resource closure/unpublished shifts and manager-only setup. The migration and all demo records remain local; production schema and data are untouched.
 
 Review before rollout: exercise the migration against non-production PostgreSQL and review effective database grants. The broad transactional locks deliberately favour correctness for this foundation and may need narrower advisory locking under measured multi-site load. Payments, recurring rotas, leave/sickness/swaps, rescheduling, notifications and the visit/collection workflow remain deferred.
+
+## Grooming visit lifecycle checkpoint
+
+Branch `codex/grooming-visit-lifecycle`, stacked on the unmerged booking branch. A manager acting as reception/grooming staff can progress a confirmed booking through arrived, handed over, in progress, ready and collected. Handover records a named authorised collection adult; collection requires an explicit staff match. Repeated arrival is idempotent, member cancellation is blocked after arrival, and corrections require a reason and append to the audit history.
+
+The ready step creates one private `manual_required` outbox item. It does not send email, SMS or push. The manager workspace calls out the manual contact requirement only while the visit is ready, and the owner sees the current state and visit history for their own dog. Public profiles receive no visit or whereabouts data.
+
+Browser acceptance completed on 26/09/2026 with local synthetic data. A new £50 grooming booking was created for Pickle, progressed through every state, shown as ready in the member view, collected after matching “Sam Pickle”, corrected back to in progress with a reason, then restored to verified collection. The UI also exposed and resolved a client/server bundling boundary and a stale manual-contact warning during the walkthrough.
+
+Validation: TypeScript and all 49 isolated tests pass; six visit tests cover duplicate arrival, collector authorisation, one-shot ready fallback, correction history, collection verification and tenant/household isolation. Production schema and data remain untouched.
+
+Review before rollout: apply and test the booking and visit migrations together in non-production PostgreSQL. General café admission, membership/payment checks, venue capacity, walk-ins, household-adult permissions, automated delivery/retries and a formal collection identity policy remain incomplete.
