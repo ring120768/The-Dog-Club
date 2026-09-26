@@ -7,6 +7,7 @@ import {
   completePasswordRecovery,
   dismissPasswordRecovery,
   issuePasswordRecoveryLink,
+  recordPasswordRecoveryDelivery,
   recoveryRequestsForPlatform,
   requestPasswordRecovery,
 } from "../src/lib/recovery";
@@ -40,6 +41,78 @@ test("public recovery requests do not reveal accounts and are rate limited", asy
     requests.filter((request) => request.email === "alice@demo.invalid").length,
     3,
   );
+});
+
+test("automatic recovery hashes the token and records provider acceptance", async () => {
+  const prepared = await requestPasswordRecovery(
+    db,
+    "manager@demo.invalid",
+    "email",
+  );
+  assert.ok(prepared);
+  const stored = (
+    await db.query<{
+      token_hash: string;
+      delivery_status: string;
+      delivery_message_id: string | null;
+    }>(
+      `SELECT token_hash,delivery_status,delivery_message_id
+       FROM password_recovery_requests WHERE id=$1`,
+      [prepared.requestId],
+    )
+  ).rows[0];
+  assert.notEqual(stored.token_hash, prepared.token);
+  assert.equal(stored.delivery_status, "pending");
+  assert.equal(stored.delivery_message_id, null);
+
+  await recordPasswordRecoveryDelivery(db, prepared.requestId, {
+    status: "provider_accepted",
+    provider: "resend",
+    messageId: "email_synthetic_001",
+  });
+  const visible = (
+    await recoveryRequestsForPlatform(db, "platform-owner")
+  ).find((item) => item.id === prepared.requestId)!;
+  assert.equal(visible.delivery_status, "provider_accepted");
+  assert.equal(visible.delivery_provider, "resend");
+  assert.equal(visible.delivery_message_id, "email_synthetic_001");
+  await assert.rejects(
+    recordPasswordRecoveryDelivery(db, prepared.requestId, {
+      status: "failed",
+      provider: "resend",
+      errorCode: "provider_500",
+    }),
+  );
+});
+
+test("failed automatic delivery remains available to manual support", async () => {
+  const prepared = await requestPasswordRecovery(
+    db,
+    "owner@demo.invalid",
+    "email",
+  );
+  assert.ok(prepared);
+  await recordPasswordRecoveryDelivery(db, prepared.requestId, {
+    status: "failed",
+    provider: "resend",
+    errorCode: "network_error",
+  });
+  const failed = (await recoveryRequestsForPlatform(db, "platform-owner")).find(
+    (item) => item.id === prepared.requestId,
+  )!;
+  assert.equal(failed.delivery_status, "failed");
+  assert.equal(failed.delivery_error_code, "network_error");
+  const manualToken = await issuePasswordRecoveryLink(
+    db,
+    "platform-owner",
+    prepared.requestId,
+  );
+  assert.match(manualToken, /^[a-f0-9]{64}$/);
+  const manual = (await recoveryRequestsForPlatform(db, "platform-owner")).find(
+    (item) => item.id === prepared.requestId,
+  )!;
+  assert.equal(manual.delivery_status, "manual_required");
+  assert.equal(manual.delivery_error_code, null);
 });
 
 test("only a platform owner can inspect, issue or dismiss recovery work", async () => {

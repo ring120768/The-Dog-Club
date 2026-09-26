@@ -5,9 +5,9 @@ import { palettes,type BrandInput } from "@/lib/brand-contract";
 import type { Club } from "@/lib/dogs";
 import { ClubMark } from "./club-mark";
 import { DogAvatar } from "./dog-avatar";
-export function BrandForm({club,platform=false}:{club?:Club;platform?:boolean}) {
+export function BrandForm({club,platform=false,demoManagerEmail=""}:{club?:Club;platform?:boolean;demoManagerEmail?:string}) {
  const [draft,setDraft]=useState<BrandInput>({name:club?.name??"",tagline:club?.tagline??"",location:club?.location??"",colour:(club?.colour??"#235448") as BrandInput["colour"],emblem:club?.emblem??"paw",avatar_tone:club?.avatar_tone??"sand"});
- const [slug,setSlug]=useState("");const [manager,setManager]=useState("manager@demo.invalid");
+ const [slug,setSlug]=useState("");const [manager,setManager]=useState(demoManagerEmail);
  const action=club?updateBrandAction.bind(null,club.slug,club.version,platform):createClubAction;
  const [state,submit,pending]=useActionState(action,{});
  return <div className="brand-workspace"><form action={submit} className="profile-form"><fieldset className="editor-fields" disabled={pending}>

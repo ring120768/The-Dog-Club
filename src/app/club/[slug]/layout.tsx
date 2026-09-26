@@ -16,6 +16,7 @@ import { requireAccount } from "@/lib/auth";
 import { database } from "@/lib/database";
 import { clubsFor } from "@/lib/dogs";
 import { logoutAction } from "@/app/actions";
+import { isDemoMode } from "@/lib/runtime";
 export default async function ClubLayout({
   children,
   params,
@@ -108,7 +109,7 @@ export default async function ClubLayout({
               / {club.role === "manager" ? "Manager" : "Your pack"}
             </span>
           </span>
-          <span className="badge">SYNTHETIC DEMO</span>
+          {isDemoMode() && <span className="badge">SYNTHETIC DEMO</span>}
         </header>
         {children}
         <footer className="workspace-footer">
