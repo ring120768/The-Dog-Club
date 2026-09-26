@@ -23,6 +23,8 @@ export type Dog = {
   bio: string;
   avatar: "sand" | "sage" | "rose";
   audience: "private" | "members" | "public";
+  can_manage: boolean;
+  can_book: boolean;
 };
 export const dogInput = z.object({
   name: z.string().trim().min(1, "Give your dog a name.").max(60),
@@ -54,7 +56,13 @@ export async function dogsFor(db: Db, account: string, club: string) {
     async (tx) =>
       (
         await tx.query<Dog>(
-          "SELECT d.*, p.id AS photo_id FROM dogs d LEFT JOIN dog_photos p ON p.club_id=d.club_id AND p.dog_id=d.id ORDER BY d.name",
+          `SELECT d.*,p.id AS photo_id,
+           (d.owner_id=$1 OR EXISTS(SELECT 1 FROM household_adult_grants h WHERE h.club_id=d.club_id AND h.owner_account_id=d.owner_id
+            AND h.adult_account_id=$1 AND h.revoked_at IS NULL AND h.can_manage_dogs)) AS can_manage,
+           (d.owner_id=$1 OR EXISTS(SELECT 1 FROM household_adult_grants h WHERE h.club_id=d.club_id AND h.owner_account_id=d.owner_id
+            AND h.adult_account_id=$1 AND h.revoked_at IS NULL AND h.can_manage_bookings)) AS can_book
+           FROM dogs d LEFT JOIN dog_photos p ON p.club_id=d.club_id AND p.dog_id=d.id ORDER BY d.name`,
+          [account],
         )
       ).rows,
   );
@@ -77,17 +85,19 @@ export async function saveDog(
       data.avatar,
       data.audience,
       club,
-      account,
       dogId,
     ];
     const result = id
       ? await tx.query(
-          "UPDATE dogs SET name=$1,breed=$2,bio=$3,avatar=$4,audience=$5 WHERE club_id=$6 AND owner_id=$7 AND id=$8 RETURNING id",
-          values,
+          `UPDATE dogs d SET name=$1,breed=$2,bio=$3,avatar=$4,audience=$5
+           WHERE d.club_id=$6 AND d.id=$7 AND (d.owner_id=$8 OR EXISTS(
+            SELECT 1 FROM household_adult_grants h WHERE h.club_id=d.club_id AND h.owner_account_id=d.owner_id
+            AND h.adult_account_id=$8 AND h.revoked_at IS NULL AND h.can_manage_dogs)) RETURNING id`,
+          [...values, account],
         )
       : await tx.query(
-          "INSERT INTO dogs(name,breed,bio,avatar,audience,club_id,owner_id,id) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id",
-          values,
+          "INSERT INTO dogs(name,breed,bio,avatar,audience,club_id,owner_id,id) VALUES($1,$2,$3,$4,$5,$6,$8,$7) RETURNING id",
+          [...values, account],
         );
     if (result.rows.length !== 1)
       throw new Error(

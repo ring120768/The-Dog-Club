@@ -19,9 +19,9 @@ export default async function ClubPage({
   const club = (await clubsFor(db, account.id)).find((c) => c.slug === slug);
   if (!club) notFound();
   const dogs = await dogsFor(db, account.id, club.id);
-  const mine = dogs.filter((d) => d.owner_id === account.id);
+  const mine = dogs.filter((d) => d.can_manage || d.can_book);
   const community = dogs.filter(
-    (d) => d.owner_id !== account.id && d.audience !== "private",
+    (d) => !d.can_manage && !d.can_book && d.audience !== "private",
   );
   const { saved } = await searchParams;
   return (
@@ -97,22 +97,28 @@ export default async function ClubPage({
                       ? "Our club"
                       : "Public"}
                 </span>
-                <Link href={`/club/${slug}/dogs/${dog.id}`}>
-                  Edit profile <ArrowUpRight size={16} />
-                </Link>
+                {dog.can_manage && (
+                  <Link href={`/club/${slug}/dogs/${dog.id}`}>
+                    Edit profile <ArrowUpRight size={16} />
+                  </Link>
+                )}
               </div>
-              <Link
-                className="public-link"
-                href={`/club/${slug}/applications/${dog.id}`}
-              >
-                Grooming application →
-              </Link>
-              <Link
-                className="public-link"
-                href={`/club/${slug}/bookings?dog=${dog.id}`}
-              >
-                Book grooming →
-              </Link>
+              {dog.can_manage && (
+                <Link
+                  className="public-link"
+                  href={`/club/${slug}/applications/${dog.id}`}
+                >
+                  Grooming application →
+                </Link>
+              )}
+              {dog.can_book && (
+                <Link
+                  className="public-link"
+                  href={`/club/${slug}/bookings?dog=${dog.id}`}
+                >
+                  Book grooming →
+                </Link>
+              )}
               {dog.audience === "public" && (
                 <Link className="public-link" href={`/p/${slug}/${dog.id}`}>
                   Open public profile ↗

@@ -54,7 +54,10 @@ export async function submitApplication(
     .parse(input);
   await db.transaction(async (tx) => {
     const owned = await tx.query(
-      "SELECT d.id FROM dogs d JOIN memberships m ON m.club_id=d.club_id AND m.account_id=d.owner_id WHERE d.id=$1 AND d.club_id=$2 AND d.owner_id=$3 FOR UPDATE OF d",
+      `SELECT d.id FROM dogs d JOIN memberships m ON m.club_id=d.club_id AND m.account_id=d.owner_id
+       WHERE d.id=$1 AND d.club_id=$2 AND (d.owner_id=$3 OR EXISTS(
+        SELECT 1 FROM household_adult_grants h WHERE h.club_id=d.club_id AND h.owner_account_id=d.owner_id
+        AND h.adult_account_id=$3 AND h.revoked_at IS NULL AND h.can_manage_dogs)) FOR UPDATE OF d`,
       [dog, club, actor],
     );
     if (!owned.rows.length)
