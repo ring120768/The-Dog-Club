@@ -70,6 +70,9 @@ test("platform export is tenant-bound, integrity checked and credential-free", a
     null,
   );
   assert.equal(archive.tables.membership_invoices[0].hosted_invoice_url, null);
+  assert.deepEqual(archive.tables.service_checkout_sessions, []);
+  assert.deepEqual(archive.tables.service_payments, []);
+  assert.deepEqual(archive.tables.service_payment_exceptions, []);
   assert.equal(archive.tables.clubs[0].id, "willow");
   assert.ok(
     archive.accounts.every(

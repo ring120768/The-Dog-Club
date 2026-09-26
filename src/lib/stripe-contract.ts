@@ -25,12 +25,36 @@ export interface StripeMembershipGateway {
   }): Promise<void>;
 }
 
+export type StripeServiceCheckoutInput = {
+  connectedAccountId: string;
+  customerEmail: string;
+  amountPence: number;
+  serviceName: string;
+  clientReferenceId: string;
+  bookingId: string;
+  successUrl: string;
+  cancelUrl: string;
+  expiresAt: Date;
+  idempotencyKey: string;
+  integrationIdentifier: string;
+};
+
+export interface StripeServiceGateway {
+  createServiceCheckout(
+    input: StripeServiceCheckoutInput,
+  ): Promise<StripeCheckoutResult>;
+}
+
 export type CheckoutEvent = {
   kind: "checkout.completed";
   sessionId: string;
   paymentStatus: "paid" | "unpaid" | "no_payment_required";
   customerId: string | null;
   subscriptionId: string | null;
+  amountTotal?: number | null;
+  currency?: string | null;
+  paymentIntentId?: string | null;
+  clientReferenceId?: string | null;
 };
 
 export type CheckoutFailedEvent = {

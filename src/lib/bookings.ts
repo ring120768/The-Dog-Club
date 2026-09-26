@@ -27,7 +27,8 @@ export type GroomingBooking = {
   starts_at: string;
   service_ends_at: string;
   busy_ends_at: string;
-  status: "confirmed" | "cancelled";
+  status: "awaiting_payment" | "confirmed" | "cancelled";
+  payment_hold_expires_at: string | null;
   price_pence_snapshot: number;
   amount_due_pence_snapshot: number;
   membership_subscription_id: string | null;
@@ -437,7 +438,8 @@ export async function availabilityFor(
        AND (gs AT TIME ZONE 'Europe/London')::date=$3::date AND gs>now()
        AND NOT EXISTS(SELECT 1 FROM shift_breaks b WHERE b.club_id=s.club_id AND b.shift_id=s.id AND b.starts_at<gs+($4*interval '1 minute') AND b.ends_at>gs)
        AND NOT EXISTS(SELECT 1 FROM resource_closures c WHERE c.club_id=s.club_id AND c.resource_id=r.id AND c.starts_at<gs+($4*interval '1 minute') AND c.ends_at>gs)
-       AND NOT EXISTS(SELECT 1 FROM grooming_bookings x WHERE x.club_id=s.club_id AND x.status='confirmed'
+       AND NOT EXISTS(SELECT 1 FROM grooming_bookings x WHERE x.club_id=s.club_id
+        AND (x.status='confirmed' OR (x.status='awaiting_payment' AND x.payment_hold_expires_at>now()))
         AND (x.staff_id=s.staff_id OR x.resource_id=r.id) AND x.starts_at<gs+($4*interval '1 minute') AND x.busy_ends_at>gs
         AND ($5::uuid IS NULL OR x.id<>$5::uuid))
       ) SELECT starts_at,to_char(starts_at AT TIME ZONE 'Europe/London','HH24:MI') AS local_time
@@ -472,7 +474,8 @@ async function chooseBookingCapacity(
       `SELECT s.id,s.location_id FROM published_shifts s WHERE s.club_id=$1 AND s.staff_id=$2 AND s.status='published'
        AND s.starts_at<=$3 AND s.ends_at>=$4
        AND NOT EXISTS(SELECT 1 FROM shift_breaks b WHERE b.club_id=s.club_id AND b.shift_id=s.id AND b.starts_at<$4 AND b.ends_at>$3)
-       AND NOT EXISTS(SELECT 1 FROM grooming_bookings x WHERE x.club_id=s.club_id AND x.status='confirmed'
+       AND NOT EXISTS(SELECT 1 FROM grooming_bookings x WHERE x.club_id=s.club_id
+        AND (x.status='confirmed' OR (x.status='awaiting_payment' AND x.payment_hold_expires_at>now()))
         AND x.staff_id=s.staff_id AND x.starts_at<$4 AND x.busy_ends_at>$3
         AND ($5::uuid IS NULL OR x.id<>$5::uuid))
        LIMIT 1`,
@@ -489,7 +492,8 @@ async function chooseBookingCapacity(
       if (resource.location_id !== shift.rows[0].location_id) continue;
       const free = await tx.query(
         `SELECT 1 WHERE NOT EXISTS(SELECT 1 FROM resource_closures c WHERE c.club_id=$1 AND c.resource_id=$2 AND c.starts_at<$4 AND c.ends_at>$3)
-         AND NOT EXISTS(SELECT 1 FROM grooming_bookings x WHERE x.club_id=$1 AND x.status='confirmed'
+         AND NOT EXISTS(SELECT 1 FROM grooming_bookings x WHERE x.club_id=$1
+          AND (x.status='confirmed' OR (x.status='awaiting_payment' AND x.payment_hold_expires_at>now()))
           AND x.resource_id=$2 AND x.starts_at<$4 AND x.busy_ends_at>$3
           AND ($5::uuid IS NULL OR x.id<>$5::uuid))`,
         [
@@ -507,6 +511,88 @@ async function chooseBookingCapacity(
   throw new OnboardingError(
     "That slot has just become unavailable. Choose another time.",
   );
+}
+
+export async function createBookingPaymentHold(
+  tx: Queryable,
+  actor: string,
+  club: string,
+  input: unknown,
+  holdExpiresAt: Date,
+) {
+  const data = z
+    .object({
+      dog_id: z.uuid(),
+      service_id: z.uuid(),
+      starts_at: z.coerce.date(),
+      accepted_terms: z.literal("yes"),
+    })
+    .parse(input);
+  if (data.starts_at <= new Date())
+    throw new OnboardingError("Choose a future slot.");
+  if (holdExpiresAt <= new Date())
+    throw new OnboardingError("The payment hold must expire in the future.");
+  await requireEligibleDog(tx, actor, club, data.dog_id);
+  const service = (
+    await tx.query<GroomingService>(
+      "SELECT * FROM grooming_services WHERE club_id=$1 AND id=$2 AND active",
+      [club, data.service_id],
+    )
+  ).rows[0];
+  if (!service) throw new OnboardingError("Service unavailable.");
+  if (service.price_pence <= 0)
+    throw new OnboardingError("This service does not require online payment.");
+  const aligned = await tx.query<{ aligned: boolean }>(
+    `SELECT extract(minute FROM $1::timestamptz AT TIME ZONE 'Europe/London')::int%15=0
+     AND extract(second FROM $1::timestamptz)=0 AS aligned`,
+    [data.starts_at.toISOString()],
+  );
+  if (!aligned.rows[0].aligned)
+    throw new OnboardingError("Choose a listed start time.");
+  const serviceEnds = new Date(
+    data.starts_at.getTime() + service.duration_minutes * 60_000,
+  );
+  const busyEnds = new Date(
+    serviceEnds.getTime() + service.cleanup_minutes * 60_000,
+  );
+  const chosen = await chooseBookingCapacity(
+    tx,
+    club,
+    data.service_id,
+    data.starts_at,
+    busyEnds,
+  );
+  const id = randomUUID();
+  await tx.query(
+    `INSERT INTO grooming_bookings(id,club_id,dog_id,service_id,resource_id,staff_id,starts_at,service_ends_at,busy_ends_at,
+     status,payment_hold_expires_at,price_pence_snapshot,amount_due_pence_snapshot,membership_subscription_id,
+     grooming_credits_applied,cancellation_terms_snapshot,created_by)
+     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'awaiting_payment',$10,$11,$11,NULL,0,$12,$13)`,
+    [
+      id,
+      club,
+      data.dog_id,
+      data.service_id,
+      chosen.resource,
+      chosen.staff,
+      data.starts_at.toISOString(),
+      serviceEnds.toISOString(),
+      busyEnds.toISOString(),
+      holdExpiresAt.toISOString(),
+      service.price_pence,
+      service.cancellation_terms,
+      actor,
+    ],
+  );
+  await tx.query(
+    "INSERT INTO booking_events(club_id,booking_id,actor_id,action) VALUES($1,$2,$3,'booking.payment_started')",
+    [club, id, actor],
+  );
+  return {
+    bookingId: id,
+    amountPence: service.price_pence,
+    serviceName: service.name,
+  };
 }
 
 export async function reserveBooking(

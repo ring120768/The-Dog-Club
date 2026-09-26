@@ -8,6 +8,12 @@ This is a separate flow from membership subscriptions. A service payment buys on
 
 Dynamic payment methods remain enabled by omitting `payment_method_types`. Stripe Tax stays disabled until the operator confirms its VAT registrations and item treatment. Each operator remains the merchant for its customer payments unless the commercial and settlement review explicitly selects another model.
 
+## Implemented server foundation
+
+The local schema and domain service now implement the 30-minute capacity hold, request-level idempotency, Stripe-hosted one-time Checkout creation, signature-verified paid/failed event routing, amount/currency/account/booking matching, successful confirmation, failed and expired hold release, and late-payment exception isolation. Availability treats only unexpired payment holds as conflicts. Provider and finance tables have forced RLS and no client-role grants. Operator archives retain the service-payment ledger and exceptions while removing hosted Checkout URLs.
+
+This foundation is not exposed to the mobile client yet. No real Stripe sandbox session has been created, no automatic refund is implemented and production remains untouched.
+
 ## Booking and payment lifecycle
 
 1. The member selects an approved dog, service, date and live slot and accepts the cancellation terms.
