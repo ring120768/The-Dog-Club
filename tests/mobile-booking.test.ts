@@ -4,6 +4,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { reviewApplication, submitApplication } from "../src/lib/applications";
 import {
   availabilityFor,
+  cancelBooking,
   createBookingSetup,
   reserveBooking,
 } from "../src/lib/bookings";
@@ -17,6 +18,7 @@ import {
   createMembershipPlan,
 } from "../src/lib/memberships";
 import { mobileBookingOptionsFor } from "../src/lib/mobile-booking";
+import { mobileMemberHomeFor } from "../src/lib/mobile-home";
 
 let db: Db;
 let service: string;
@@ -125,5 +127,26 @@ test("a mobile choice can be confirmed with an eligible membership credit", asyn
     (await mobileBookingOptionsFor(db, "alice", club)).membership
       ?.remainingGroomingCredits,
     1,
+  );
+});
+
+test("mobile cancellation removes the booking and restores its credit", async () => {
+  const home = await mobileMemberHomeFor(db, "alice", club);
+  assert.equal(home.upcomingBookings.length, 1);
+  await cancelBooking(
+    db,
+    "alice",
+    club,
+    home.upcomingBookings[0].id,
+    "Cancelled by member in mobile app",
+  );
+  assert.deepEqual(
+    (await mobileMemberHomeFor(db, "alice", club)).upcomingBookings,
+    [],
+  );
+  assert.equal(
+    (await mobileBookingOptionsFor(db, "alice", club)).membership
+      ?.remainingGroomingCredits,
+    2,
   );
 });

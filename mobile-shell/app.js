@@ -144,7 +144,33 @@
         ? `${booking.groomingCreditsApplied} membership credit${booking.groomingCreditsApplied === 1 ? "" : "s"}`
         : `£${(booking.amountDuePence / 100).toFixed(2)} due`;
       detail.textContent = `${formatDateTime(booking.startsAt)} · ${payment}`;
-      item.append(title, detail);
+      const cancel = document.createElement("button");
+      cancel.className = "secondary booking-cancel";
+      cancel.type = "button";
+      cancel.textContent = "Cancel booking";
+      cancel.addEventListener("click", async () => {
+        if (
+          !confirm(
+            `Cancel ${booking.dogName}'s ${booking.serviceName} on ${formatDateTime(booking.startsAt)}?`,
+          )
+        )
+          return;
+        cancel.disabled = true;
+        byId("dog-message").textContent = "";
+        try {
+          await request(
+            `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/bookings/${encodeURIComponent(booking.id)}`,
+            { method: "DELETE" },
+          );
+          await openClub(state.club);
+          byId("dog-message").textContent =
+            "Booking cancelled. Any applied grooming credit has been restored.";
+        } catch (error) {
+          byId("dog-message").textContent = error.message;
+          cancel.disabled = false;
+        }
+      });
+      item.append(title, detail, cancel);
       list.append(item);
     });
     byId("booking-empty").textContent = payload.upcomingBookings.length

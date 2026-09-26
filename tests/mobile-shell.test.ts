@@ -41,3 +41,15 @@ test("mobile grooming flow searches live availability and confirms without card 
   assert.match(script, /\/bookings/);
   assert.doesNotMatch(shell, /card number|payment details/i);
 });
+
+test("mobile upcoming bookings can be cancelled after explicit confirmation", async () => {
+  const script = await readFile(
+    new URL("../mobile-shell/app.js", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(script, /Cancel booking/);
+  assert.match(script, /confirm\(/);
+  assert.match(script, /method:\s*"DELETE"/);
+  assert.match(script, /grooming credit has been restored/);
+});
