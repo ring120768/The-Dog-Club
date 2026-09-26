@@ -765,6 +765,107 @@ textarea {
 .form-page h1 {
   font-size: 44px;
 }
+.demo-checkout-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 28px 18px;
+  background:
+    radial-gradient(circle at 15% 8%, #dce9df 0, transparent 34%), #f5efe5;
+}
+.demo-checkout-card {
+  width: min(100%, 520px);
+  padding: clamp(24px, 6vw, 42px);
+  border: 1px solid #d7ddd3;
+  border-radius: 24px;
+  background: #fffdfa;
+  box-shadow: 0 22px 70px rgb(36 59 50 / 14%);
+}
+.demo-checkout-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.demo-checkout-brand > span {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #e5eee9;
+  font-size: 23px;
+}
+.demo-checkout-brand strong,
+.demo-checkout-brand small {
+  display: block;
+}
+.demo-checkout-banner {
+  margin: 24px 0 20px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: #fff3cc;
+  color: #735900;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+.demo-checkout-card h1 {
+  font-size: clamp(34px, 8vw, 48px);
+}
+.demo-checkout-intro {
+  margin-top: 12px;
+  color: var(--muted);
+}
+.demo-checkout-summary {
+  margin: 28px 0;
+  border-top: 1px solid var(--line);
+}
+.demo-checkout-summary > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+}
+.demo-checkout-summary dt {
+  color: var(--muted);
+}
+.demo-checkout-summary dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 700;
+}
+.demo-checkout-summary .demo-checkout-total {
+  padding-top: 18px;
+  font-size: 20px;
+}
+.demo-checkout-actions {
+  display: grid;
+  gap: 12px;
+}
+.demo-checkout-actions form,
+.demo-checkout-actions .button {
+  width: 100%;
+}
+.demo-checkout-actions .text-button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  text-decoration: underline;
+}
+.demo-checkout-return {
+  padding: 16px;
+  border-radius: 10px;
+  background: #e5eee9;
+  color: var(--brand);
+  font-weight: 700;
+}
+.demo-checkout-disclaimer {
+  margin-top: 22px;
+  line-height: 1.5;
+}
 .error,
 .success {
   padding: 13px 16px;

@@ -1,4 +1,8 @@
 import { database } from "@/lib/database";
+import {
+  demoServiceGateway,
+  ensureDemoServicePaymentAccount,
+} from "@/lib/demo-service-payments";
 import { clubsFor } from "@/lib/dogs";
 import {
   mobileJson,
@@ -7,6 +11,7 @@ import {
 } from "@/lib/mobile-http";
 import { mobileAccount } from "@/lib/mobile-session";
 import { OnboardingError } from "@/lib/onboarding";
+import { isDemoMode } from "@/lib/runtime";
 import { prepareServiceCheckout } from "@/lib/service-payments";
 import { stripeServiceGateway } from "@/lib/stripe-client";
 
@@ -47,13 +52,15 @@ export async function POST(
     );
   }
   try {
+    const demo = isDemoMode();
+    if (demo) await ensureDemoServicePaymentAccount(db, club.id);
     const checkout = await prepareServiceCheckout(
       db,
       account.id,
       club.id,
       input,
-      process.env.APP_URL ?? "",
-      stripeServiceGateway,
+      demo ? new URL(request.url).origin : (process.env.APP_URL ?? ""),
+      demo ? demoServiceGateway : stripeServiceGateway,
     );
     return mobileJson(request, checkout, { status: 201 });
   } catch (error) {
