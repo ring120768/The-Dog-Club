@@ -248,3 +248,13 @@ Interactive acceptance exposed a CSS specificity defect: when a dog had a photog
 Validation: all 109 isolated tests and TypeScript validation pass. Capacitor sync, Android debug assembly with Java 21 and the unsigned iOS simulator build pass. Android interactive acceptance is still outstanding because this Mac has no Android Virtual Device or installed emulator system image; no large SDK image was downloaded implicitly. The iOS pass used localhost and synthetic records, not a reviewed HTTPS non-production deployment. Production remains untouched.
 
 Next: provision or select an Android Virtual Device and repeat the same member journey. Then move to a reviewed HTTPS non-production endpoint and design Keychain/Keystore session persistence plus device-level revocation before signing or distribution.
+
+## Mobile member-home checkpoint — 26/09/2026
+
+Branch `codex/mobile-member-home`, stacked on `codex/mobile-simulator-polish`. The shared member client now loads a tenant-scoped home summary alongside the club’s dog directory: the signed-in account’s current plan and state, monthly price, remaining grooming credits, benefit availability and period/cancellation date, plus up to five confirmed future grooming bookings with the dog, service, London date/time and either credits used or amount due.
+
+The server applies explicit actor predicates in addition to row-level security. This matters for managers: using the member client does not return other households’ subscriptions or bookings even though the manager’s operational role can see them elsewhere. Delegated household adults see only future bookings for dogs where their live grant includes booking management. Provider IDs, card details, staff IDs, care notes and other households’ records are absent from the response.
+
+Validation: all 111 isolated tests and TypeScript validation pass. A focused domain test creates a synthetic membership and credit-funded future booking, verifies Alice’s summary, and proves Bea and the Willow manager receive empty commercial summaries. A direct bearer-authorised localhost probe returned Alice’s `Care Demo` membership with two credits and no upcoming local bookings. Capacitor sync, Android debug assembly with Java 21 and the unsigned iOS simulator build pass. Simulator automation signed in successfully, but external clicking became unreliable at the club card after reinstall, so this slice does not claim a completed iOS visual pass. Production remains untouched.
+
+Next: complete the member-home visual pass on iOS and Android, then add mobile availability/search and booking confirmation without collecting card payment. Keep secure session persistence, reviewed HTTPS configuration and store signing behind their existing gates.

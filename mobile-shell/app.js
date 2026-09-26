@@ -112,14 +112,66 @@
         "There are no available club memberships on this account.";
     show("club-view");
   }
+  function renderMemberHome(payload) {
+    const membership = payload.membership;
+    byId("membership-heading").textContent = membership
+      ? membership.planName
+      : "No current membership";
+    byId("membership-status").textContent = membership
+      ? membership.state.replaceAll("_", " ")
+      : "Ask the club team about the available plans.";
+    byId("membership-benefits").textContent = membership
+      ? membership.benefitsAvailable
+        ? `${membership.remainingGroomingCredits} grooming credits remaining · £${(membership.monthlyPricePence / 100).toFixed(2)} per month`
+        : "Membership benefits are currently unavailable."
+      : "";
+    byId("membership-period").textContent = membership
+      ? membership.cancellationEffectiveOn
+        ? `Cancellation takes effect ${formatDate(membership.cancellationEffectiveOn)}.`
+        : `Current period ends ${formatDate(membership.periodEndsOn)}.`
+      : "";
+
+    const list = byId("booking-list");
+    list.replaceChildren();
+    payload.upcomingBookings.forEach((booking) => {
+      const item = document.createElement("li");
+      const title = document.createElement("strong");
+      title.textContent = `${booking.dogName} · ${booking.serviceName}`;
+      const detail = document.createElement("p");
+      const payment = booking.groomingCreditsApplied
+        ? `${booking.groomingCreditsApplied} membership credit${booking.groomingCreditsApplied === 1 ? "" : "s"}`
+        : `£${(booking.amountDuePence / 100).toFixed(2)} due`;
+      detail.textContent = `${formatDateTime(booking.startsAt)} · ${payment}`;
+      item.append(title, detail);
+      list.append(item);
+    });
+    byId("booking-empty").textContent = payload.upcomingBookings.length
+      ? ""
+      : "No upcoming grooming bookings.";
+  }
+  function formatDate(value) {
+    return new Intl.DateTimeFormat("en-GB", {
+      dateStyle: "medium",
+      timeZone: "Europe/London",
+    }).format(new Date(value));
+  }
+  function formatDateTime(value) {
+    return new Intl.DateTimeFormat("en-GB", {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: "Europe/London",
+    }).format(new Date(value));
+  }
   async function openClub(club) {
     byId("club-message").textContent = "";
     try {
-      const payload = await request(
-        `/api/mobile/clubs/${encodeURIComponent(club.slug)}/dogs`,
-      );
+      const [payload, home] = await Promise.all([
+        request(`/api/mobile/clubs/${encodeURIComponent(club.slug)}/dogs`),
+        request(`/api/mobile/clubs/${encodeURIComponent(club.slug)}/home`),
+      ]);
       state.club = club;
       byId("club-name").textContent = payload.club.name;
+      renderMemberHome(home);
       const list = byId("dog-list");
       list.replaceChildren();
       payload.dogs.forEach((dog) => {

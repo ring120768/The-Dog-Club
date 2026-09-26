@@ -37,4 +37,6 @@ Java 25 is installed on the development machine but is too new for the generated
 
 ## Next mobile vertical slice
 
-Exercise the complete journey on one iOS simulator and one Android emulator against a reviewed HTTPS non-production deployment, then decide whether an in-app camera is justified. Add camera permissions only with reviewed privacy text and denial/retry behaviour. Decide shared marketplace listing versus operator-branded releases before creating signing identities or promising individual store listings.
+The current shared shell covers member sign-in, club selection, dog profiles and photographs, authorised profile/photo editing, and a read-only current-membership/upcoming-booking summary. It keeps the bearer session in memory and uses the operating-system file picker without camera or broad media permissions.
+
+Exercise the complete journey on one iOS simulator and one Android emulator against a reviewed HTTPS non-production deployment, then add mobile availability/search and booking confirmation without implying payment collection. Decide whether an in-app camera is justified. Add camera permissions only with reviewed privacy text and denial/retry behaviour. Decide shared marketplace listing versus operator-branded releases before creating signing identities or promising individual store listings.
