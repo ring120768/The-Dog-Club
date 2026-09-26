@@ -208,3 +208,13 @@ The API reuses the existing lifecycle and row-level tenant boundary. It allows t
 Validation: TypeScript and all 104 isolated tests pass. Mobile coverage proves token hashing, normalised sign-in, generic invalid credentials, expiry, revocation, club/dog tenant isolation, restricted-role denial and CORS rejection. Both native projects have been synchronised with the new shell. Production schema, data, credentials and deployment remain untouched.
 
 Next: provide bearer-authorised dog detail/photo delivery, then run the complete journey on iOS and Android against an HTTPS non-production deployment. Review Keychain/Keystore storage and device-loss revocation before persisting sessions; review camera/library privacy text before adding photo selection.
+
+## Mobile dog-profile checkpoint — 26/09/2026
+
+Branch `codex/mobile-dog-profile`, stacked on `codex/mobile-member-session`. Adds a bearer-authorised dog-detail route and versioned photo route. Both re-check the member's current club access and reuse the established dog/photo row-level policies, so private, members-only and public audience changes take effect immediately. Photo responses are WebP-only, non-cacheable and fetched with the bearer header; the app converts the response to a temporary object URL and revokes it when leaving the profile.
+
+The shared shell now opens each visible dog into a profile with photograph or branded fallback, breed, biography, audience label and “Your dog” marker. It still receives no owner identifier or care note. Hostile club substitution returns the same not-found result as a missing profile.
+
+Validation: TypeScript and all 105 isolated tests pass; focused response coverage verifies the mobile photo content type, cross-origin policy, no-store policy, exact bytes and unavailable response. A live localhost probe returned Bertie's permitted profile and rejected Coast substitution with 404. Capacitor synchronisation, Android debug assembly with Java 21 and unsigned iOS simulator build all pass. The local seed has no Bertie photograph, while existing image-policy tests cover authorised bytes and immediate revocation. Production remains untouched.
+
+Next: add authorised profile editing and photo upload/replace/remove. Do not add camera or library capabilities until iOS usage descriptions, Android permissions, size/type handling and denial/retry behaviour are reviewed together.

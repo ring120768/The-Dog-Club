@@ -9,7 +9,7 @@
     <meta name="color-scheme" content="light" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src https: http://127.0.0.1:3100 http://10.0.2.2:3100"
+      content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src https: http://127.0.0.1:3100 http://10.0.2.2:3100"
     />
     <title>The Dog Club</title>
     <style>
@@ -147,6 +147,7 @@
         font-weight: 500;
       }
       .dog {
+        width: 100%;
         display: grid;
         grid-template-columns: 52px 1fr;
         gap: 13px;
@@ -154,6 +155,8 @@
         padding: 14px;
         background: white;
         border-radius: 18px;
+        color: inherit;
+        text-align: left;
       }
       .avatar {
         display: grid;
@@ -188,6 +191,26 @@
         background: #e5eee9;
         font-size: 0.72rem;
         font-weight: 800;
+      }
+      .profile-photo {
+        display: block;
+        width: 180px;
+        height: 180px;
+        margin: 20px auto;
+        border-radius: 50%;
+        object-fit: cover;
+        background: #ecdcc9;
+        box-shadow: 0 14px 34px rgb(35 84 72 / 16%);
+      }
+      .profile-photo.avatar {
+        display: grid;
+      }
+      .profile-copy {
+        text-align: center;
+      }
+      .profile-copy .muted {
+        display: block;
+        margin-bottom: 12px;
       }
       .message {
         min-height: 1.5em;
@@ -273,6 +296,26 @@
         <h2 id="club-name"></h2>
         <div id="dog-list" class="dog-list"></div>
         <p id="dog-message" class="message" role="alert"></p>
+      </section>
+      <section id="profile-view" class="card hidden">
+        <div class="topline">
+          <button id="profile-back" class="secondary" type="button">
+            Dogs
+          </button>
+          <button id="profile-sign-out" class="secondary" type="button">
+            Sign out
+          </button>
+        </div>
+        <div class="profile-copy">
+          <img id="profile-photo" class="profile-photo hidden" alt="" />
+          <div id="profile-avatar" class="profile-photo avatar"></div>
+          <span id="profile-audience" class="eyebrow"></span>
+          <h2 id="profile-name"></h2>
+          <span id="profile-breed" class="muted"></span>
+          <p id="profile-bio"></p>
+          <span id="profile-owner" class="pill hidden">Your dog</span>
+        </div>
+        <p id="profile-message" class="message" role="alert"></p>
       </section>
     </main>
     <script src="app.js"></script>

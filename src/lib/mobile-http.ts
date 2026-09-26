@@ -56,3 +56,20 @@ export function mobileEmpty(request: Request, status = 204) {
     ? new Response(null, { status, headers })
     : new Response("Origin is not allowed.", { status: 403 });
 }
+
+export function mobilePhoto(
+  request: Request,
+  content: Uint8Array | null,
+): Response {
+  const headers = mobileCorsHeaders(request);
+  if (!headers) return new Response("Origin is not allowed.", { status: 403 });
+  headers.set("Cache-Control", "private, no-store, max-age=0");
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("Cross-Origin-Resource-Policy", "cross-origin");
+  headers.set("X-Robots-Tag", "noindex");
+  if (!content)
+    return new Response("Photo unavailable", { status: 404, headers });
+  headers.set("Content-Type", "image/webp");
+  headers.set("Content-Disposition", 'inline; filename="dog-profile.webp"');
+  return new Response(new Uint8Array(content), { headers });
+}

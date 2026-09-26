@@ -10,7 +10,7 @@ import {
   revokeMobileSession,
 } from "../src/lib/mobile-session";
 import { testDatabase } from "./db";
-import { mobileCorsHeaders } from "../src/lib/mobile-http";
+import { mobileCorsHeaders, mobilePhoto } from "../src/lib/mobile-http";
 
 let db: Db;
 
@@ -138,4 +138,24 @@ test("mobile CORS allows only native or explicitly configured origins", () => {
     ),
     null,
   );
+});
+
+test("mobile photo responses are bearer-fetchable but never cacheable", async () => {
+  const request = new Request("https://example.test", {
+    headers: { origin: "capacitor://localhost" },
+  });
+  const content = new Uint8Array([1, 2, 3]);
+  const response = mobilePhoto(request, content);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("Content-Type"), "image/webp");
+  assert.equal(
+    response.headers.get("Cache-Control"),
+    "private, no-store, max-age=0",
+  );
+  assert.equal(
+    response.headers.get("Cross-Origin-Resource-Policy"),
+    "cross-origin",
+  );
+  assert.deepEqual(new Uint8Array(await response.arrayBuffer()), content);
+  assert.equal(mobilePhoto(request, null).status, 404);
 });

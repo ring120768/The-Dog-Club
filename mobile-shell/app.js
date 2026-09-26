@@ -1,8 +1,8 @@
 (() => {
   "use strict";
-  const state = { token: "", server: "", clubs: [] };
+  const state = { token: "", server: "", clubs: [], club: null, photoUrl: "" };
   const byId = (id) => document.getElementById(id);
-  const views = ["login-view", "club-view", "dog-view"];
+  const views = ["login-view", "club-view", "dog-view", "profile-view"];
 
   function platform() {
     const value = window.Capacitor?.getPlatform?.();
@@ -45,6 +45,18 @@
     }
     return response.status === 204 ? null : response.json();
   }
+  async function photo(path) {
+    const response = await fetch(`${state.server}${path}`, {
+      headers: { Authorization: `Bearer ${state.token}` },
+    });
+    if (!response.ok) throw new Error("This photo is not available.");
+    return response.blob();
+  }
+  function clearPhoto() {
+    if (state.photoUrl) URL.revokeObjectURL(state.photoUrl);
+    state.photoUrl = "";
+    byId("profile-photo").removeAttribute("src");
+  }
   function setBusy(form, busy) {
     [...form.elements].forEach((element) => (element.disabled = busy));
   }
@@ -75,12 +87,14 @@
       const payload = await request(
         `/api/mobile/clubs/${encodeURIComponent(club.slug)}/dogs`,
       );
+      state.club = club;
       byId("club-name").textContent = payload.club.name;
       const list = byId("dog-list");
       list.replaceChildren();
       payload.dogs.forEach((dog) => {
-        const article = document.createElement("article");
+        const article = document.createElement("button");
         article.className = "dog";
+        article.type = "button";
         const initial = document.createElement("div");
         initial.className = `avatar ${dog.avatar}`;
         initial.textContent = dog.name.slice(0, 1).toUpperCase();
@@ -100,6 +114,7 @@
           copy.append(pill);
         }
         article.append(initial, copy);
+        article.addEventListener("click", () => openDog(dog.id));
         list.append(article);
       });
       byId("dog-message").textContent = payload.dogs.length
@@ -110,10 +125,49 @@
       byId("club-message").textContent = error.message;
     }
   }
+  async function openDog(dogId) {
+    const message = byId("profile-message");
+    message.textContent = "";
+    clearPhoto();
+    try {
+      const payload = await request(
+        `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/dogs/${encodeURIComponent(dogId)}`,
+      );
+      const dog = payload.dog;
+      byId("profile-name").textContent = dog.name;
+      byId("profile-breed").textContent = dog.breed;
+      byId("profile-bio").textContent = dog.bio;
+      byId("profile-audience").textContent =
+        dog.audience === "public"
+          ? "Public profile"
+          : dog.audience === "members"
+            ? "Club members"
+            : "Private profile";
+      byId("profile-owner").classList.toggle("hidden", !dog.canManage);
+      const image = byId("profile-photo");
+      const fallback = byId("profile-avatar");
+      fallback.className = `profile-photo avatar ${dog.avatar}`;
+      fallback.textContent = dog.name.slice(0, 1).toUpperCase();
+      image.alt = `${dog.name}, ${dog.breed}`;
+      image.classList.add("hidden");
+      fallback.classList.remove("hidden");
+      show("profile-view");
+      if (dog.photoUrl) {
+        state.photoUrl = URL.createObjectURL(await photo(dog.photoUrl));
+        image.src = state.photoUrl;
+        image.classList.remove("hidden");
+        fallback.classList.add("hidden");
+      }
+    } catch (error) {
+      message.textContent = error.message;
+    }
+  }
   async function logout(notifyServer = true) {
     const token = state.token;
     state.token = "";
     state.clubs = [];
+    state.club = null;
+    clearPhoto();
     show("login-view");
     byId("password").value = "";
     if (notifyServer && token) {
@@ -153,6 +207,11 @@
     }
   });
   byId("back").addEventListener("click", () => show("club-view"));
+  byId("profile-back").addEventListener("click", () => {
+    clearPhoto();
+    show("dog-view");
+  });
   byId("sign-out").addEventListener("click", () => logout());
   byId("dog-sign-out").addEventListener("click", () => logout());
+  byId("profile-sign-out").addEventListener("click", () => logout());
 })();
