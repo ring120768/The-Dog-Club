@@ -20,6 +20,7 @@ export type MembershipPlan = {
   grooming_credits_per_period: number;
   payment_issue_benefits: boolean;
   active: boolean;
+  stripe_price_id: string | null;
 };
 
 export type MemberSubscription = {
@@ -28,7 +29,7 @@ export type MemberSubscription = {
   plan_id: string;
   account_id: string;
   state: SubscriptionState;
-  source: "demo_manual";
+  source: "demo_manual" | "stripe";
   period_starts_on: string;
   period_ends_on: string;
   cancellation_effective_on: string | null;
@@ -38,6 +39,9 @@ export type MemberSubscription = {
   grooming_credits_per_period: number;
   payment_issue_benefits: boolean;
   remaining_grooming_credits: number;
+  provider_account_id: string | null;
+  provider_subscription_id: string | null;
+  latest_paid_invoice_id: string | null;
 };
 
 export type BenefitEntry = {

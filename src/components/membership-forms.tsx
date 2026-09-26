@@ -6,6 +6,8 @@ import {
   createPlanAction,
   groomingCreditAction,
   membershipStateAction,
+  setStripePriceAction,
+  startMembershipCheckoutAction,
 } from "@/app/membership-actions";
 
 function Result({ state }: { state: { error?: string; success?: string } }) {
@@ -286,5 +288,61 @@ export function MembershipAdminForms({
         </form>
       </details>
     </div>
+  );
+}
+
+export function StripePriceForm({
+  club,
+  slug,
+  plan,
+  current,
+}: {
+  club: string;
+  slug: string;
+  plan: string;
+  current: string | null;
+}) {
+  const [state, action, pending] = useActionState(
+    setStripePriceAction.bind(null, club, slug, plan),
+    {},
+  );
+  return (
+    <form action={action} className="membership-inline-form stripe-price-form">
+      <label>
+        Stripe sandbox Price ID
+        <input
+          name="stripe_price_id"
+          required
+          pattern="price_[A-Za-z0-9_]+"
+          defaultValue={current ?? ""}
+          placeholder="price_…"
+        />
+      </label>
+      <Result state={state} />
+      <button className="button secondary" disabled={pending}>
+        {pending ? "Linking…" : current ? "Replace Price" : "Link Price"}
+      </button>
+    </form>
+  );
+}
+
+export function CheckoutMembershipForm({
+  club,
+  plan,
+}: {
+  club: string;
+  plan: string;
+}) {
+  const [state, action, pending] = useActionState(
+    startMembershipCheckoutAction.bind(null, club, plan),
+    {},
+  );
+  return (
+    <form action={action} className="membership-inline-form">
+      <Result state={state} />
+      <button className="button" disabled={pending}>
+        {pending ? "Opening Stripe…" : "Choose this plan"}
+      </button>
+    </form>
   );
 }

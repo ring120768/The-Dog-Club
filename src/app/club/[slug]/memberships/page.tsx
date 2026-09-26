@@ -11,10 +11,13 @@ import {
 import { subscriptionLabels } from "@/lib/membership-contract";
 import {
   CancelMembershipForm,
+  CheckoutMembershipForm,
   DemoMembershipForm,
   MembershipAdminForms,
   MembershipPlanForm,
+  StripePriceForm,
 } from "@/components/membership-forms";
+import { paymentAccountFor } from "@/lib/stripe-memberships";
 
 const displayDate = (value: string) =>
   new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(
@@ -32,7 +35,7 @@ export default async function MembershipsPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ membership?: string }>;
+  searchParams: Promise<{ membership?: string; checkout?: string }>;
 }) {
   const { slug } = await params;
   const account = await requireAccount();
@@ -42,18 +45,36 @@ export default async function MembershipsPage({
   );
   if (!club) notFound();
   const manager = club.role === "manager";
-  const [plans, membershipData, accounts] = await Promise.all([
+  const [plans, membershipData, accounts, paymentAccount] = await Promise.all([
     plansFor(db, account.id, club.id),
     subscriptionsFor(db, account.id, club.id),
     manager ? membershipAccountsFor(db, account.id, club.id) : [],
+    paymentAccountFor(db, club.id),
   ]);
-  const result = (await searchParams).membership;
+  const query = await searchParams;
+  const result = query.membership;
   const messages: Record<string, string> = {
     activated: "Demo membership activated. No payment was taken.",
     cancelled: "Cancellation scheduled for the recorded period end.",
     state: "Membership state updated and audited.",
     credits: "Grooming-credit ledger updated.",
+    "cancellation-requested":
+      "Stripe received the cancellation request. The membership changes after its signed webhook arrives.",
   };
+  const checkoutMessages: Record<string, string> = {
+    returned:
+      "Stripe checkout returned. Confirmation remains pending until the signed webhook arrives.",
+    cancelled: "Stripe checkout was cancelled. No membership was activated.",
+  };
+  const checkoutReady =
+    paymentAccount?.environment === "sandbox" &&
+    paymentAccount.status === "connected" &&
+    paymentAccount.charges_enabled &&
+    paymentAccount.details_submitted &&
+    Boolean(process.env.STRIPE_SECRET_KEY);
+  const hasCurrentMembership = membershipData.subscriptions.some(
+    (subscription) => subscription.state !== "ended",
+  );
   return (
     <main className="club-main membership-page">
       {result && messages[result] && (
@@ -61,11 +82,17 @@ export default async function MembershipsPage({
           {messages[result]}
         </p>
       )}
+      {query.checkout && checkoutMessages[query.checkout] && (
+        <p className="success" role="status">
+          {checkoutMessages[query.checkout]}
+        </p>
+      )}
       <span className="eyebrow">MEMBERSHIP, MADE CLEAR</span>
       <h1>Plans and benefits.</h1>
       <p className="intro">
         See the price, inclusions, limits and cancellation terms together.
-        Payments are not connected in this demo.
+        Stripe sandbox checkout appears only after the club connection and plan
+        Price are configured. Browser return pages never prove payment.
       </p>
 
       <section className="membership-plans">
@@ -96,6 +123,25 @@ export default async function MembershipsPage({
                 <dt>Cancellation</dt>
                 <dd>{plan.cancellation_terms}</dd>
               </dl>
+              {manager && (
+                <StripePriceForm
+                  club={club.id}
+                  slug={slug}
+                  plan={plan.id}
+                  current={plan.stripe_price_id}
+                />
+              )}
+              {!manager &&
+                !hasCurrentMembership &&
+                plan.stripe_price_id &&
+                (checkoutReady ? (
+                  <CheckoutMembershipForm club={club.id} plan={plan.id} />
+                ) : (
+                  <p className="demo-payment-note">
+                    Online checkout is waiting for the club’s Stripe sandbox
+                    connection.
+                  </p>
+                ))}
             </article>
           ))}
         </div>
@@ -168,7 +214,9 @@ export default async function MembershipsPage({
                 </p>
               )}
               <p className="demo-payment-note">
-                Demo entitlement · no payment-provider confirmation
+                {subscription.source === "stripe"
+                  ? "Stripe-managed membership · state confirmed by signed events"
+                  : "Demo entitlement · no payment-provider confirmation"}
               </p>
               <details className="benefit-history">
                 <summary>Benefit history ({ledger.length})</summary>
