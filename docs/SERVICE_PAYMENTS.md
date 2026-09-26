@@ -14,7 +14,9 @@ The local schema and domain service now implement the 30-minute capacity hold, r
 
 The bearer-authorised mobile API now creates the hold and returns the hosted URL. The shared iOS/Android shell opens it with Capacitor Browser, listens for the browser closing and reads an authenticated status endpoint. A manual refresh remains available for web fallback and delayed webhook delivery. The status projection exposes only booking ID, bounded lifecycle state and expiry; it never returns connected-account, Session, PaymentIntent or hosted URL data.
 
-No real Stripe sandbox session has been created, no automatic refund is implemented and production remains untouched.
+For sales demonstrations, explicit local demo mode now substitutes a hosted-looking payment wall for Stripe. It shows the selected club, dog, service, appointment and GBP total, then lets the demonstrator complete or decline the payment. Completion uses the same service-payment event lifecycle as the Stripe adapter, so it confirms the booking and records a captured synthetic payment; decline cancels the hold and releases capacity. The page states that it is a demonstration, collects no card details and cannot charge anyone. Both its route and its database actions fail closed unless `DOGCLUB_LOCAL_DEMO=1` and `NODE_ENV` is not `production`.
+
+No real Stripe sandbox session has been created, no automatic refund is implemented and production remains untouched. The demo payment wall is evidence of the product journey and local domain behaviour, not evidence that Stripe or live payment acceptance is connected.
 
 Expired holds are excluded from availability and reported as expired immediately from their timestamp, without waiting for a background task. A protected Vercel maintenance route now reconciles those effective expiries into persisted cancelled bookings, expired checkout sessions and audit events in bounded batches. Its checked-in schedule runs once daily so it deploys on Vercel Hobby as well as paid plans. `CRON_SECRET` is mandatory and must contain at least 16 characters; an absent or weak value fails closed. A future Pro deployment may increase the schedule frequency after operational review, but correctness does not depend on cron timing.
 
@@ -60,6 +62,8 @@ Booking audit actions distinguish `booking.payment_started`, `booking.payment_co
 The booking options response tells the client whether a selection is covered by credits or requires online payment. For online payment, the confirmation action returns a checkout URL and an `awaiting_payment` booking ID. The app displays “Held for 30 minutes” and opens the hosted page using a reviewed system-browser flow.
 
 Universal Links/App Links and an HTTPS fallback page must be configured before mobile acceptance. The app refreshes the booking after returning and shows payment processing, confirmed, failed, expired or late-payment follow-up copy. It never infers success from a query parameter.
+
+In explicit local demo mode, the same mobile contract returns the local demonstration payment-wall URL instead of contacting Stripe. The app still opens it in the system browser and refreshes the authenticated status after return. Production and ordinary non-demo environments always select the Stripe gateway and can never fall back to the simulator.
 
 ## Acceptance gates
 

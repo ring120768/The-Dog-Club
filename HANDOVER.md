@@ -326,3 +326,13 @@ Capacity already releases exactly when the 30-minute timestamp passes because av
 Validation: TypeScript, all 125 isolated tests, `vercel.json` parsing and the production Next.js build pass. Authentication coverage proves exact bearer matching and fail-closed behaviour for absent or weak secrets; service-payment coverage exercises bounded multi-batch reconciliation and the existing late-payment quarantine.
 
 Next: validate the maintenance endpoint in a non-production deployment with a configured `CRON_SECRET`, then run the real Stripe sandbox Checkout and signed webhook sequence once the missing Stripe and app-origin credentials are available.
+
+## Local demo service-payment wall checkpoint — 26/09/2026
+
+Branch `codex/demo-service-paywall`, stacked on `codex/service-payment-expiry`. Explicit local demo mode now replaces the unavailable Stripe-hosted page with a polished, hosted-looking payment wall that shows the club, service, dog, London appointment time and GBP total. It offers successful and declined outcomes, states prominently that no money or card data is involved, and contains no card inputs.
+
+The simulator uses the same service-payment event lifecycle as the Stripe adapter. A completed demonstration confirms the held booking and writes a captured synthetic GBP payment; a decline cancels the booking and releases capacity. The mobile API selects this gateway only when `DOGCLUB_LOCAL_DEMO=1` and the runtime is not production. The page, server action and synthetic provider-account setup all repeat that fail-closed gate, so production cannot silently use the simulator.
+
+Focused TypeScript and four new tests pass. Browser acceptance created checkout `26e5cf8b-da13-41fa-b8a6-966b4dcd10b3` for Bertie's £65 Member full groom, rendered the labelled payment wall, completed it and displayed the confirmed result. A direct local ledger read then showed booking `099d4df5-7423-4540-bc80-835ea6b16fc7` as `confirmed`, the checkout as `completed`, the payment as `captured` for 6,500 pence GBP and the capacity hold cleared. Production remains untouched.
+
+Next: retain this simulator for demonstrations, but do not describe payments as connected. A real Stripe sandbox Checkout plus signed webhook sequence against a reviewed HTTPS non-production deployment remains the payment acceptance gate.
