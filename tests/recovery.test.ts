@@ -151,11 +151,23 @@ test("recovery tokens are hashed, single-use and invalidate every session", asyn
   await db.query(
     "INSERT INTO sessions(token_hash,account_id,expires_at) VALUES('recovery-test-one','alice',now()+interval '1 hour'),('recovery-test-two','alice',now()+interval '1 hour')",
   );
+  await db.query(
+    `INSERT INTO mobile_sessions(token_hash,account_id,platform,expires_at,id,device_name)
+     VALUES('recovery-mobile-test','alice','ios',now()+interval '1 hour','00000000-0000-4000-8000-000000000999','Recovery test iPhone')`,
+  );
   const newPassword = "A-New-Synthetic-Password-26";
   assert.equal(await completePasswordRecovery(db, token, newPassword), "alice");
   assert.equal(
     (await db.query("SELECT token_hash FROM sessions WHERE account_id='alice'"))
       .rows.length,
+    0,
+  );
+  assert.equal(
+    (
+      await db.query(
+        "SELECT token_hash FROM mobile_sessions WHERE account_id='alice' AND revoked_at IS NULL",
+      )
+    ).rows.length,
     0,
   );
   const hash = (

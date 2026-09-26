@@ -269,6 +269,10 @@ export async function completePasswordRecovery(
       request.account_id,
     ]);
     await tx.query(
+      "UPDATE mobile_sessions SET revoked_at=now() WHERE account_id=$1 AND revoked_at IS NULL",
+      [request.account_id],
+    );
+    await tx.query(
       "DELETE FROM login_attempts WHERE email=(SELECT email FROM accounts WHERE id=$1)",
       [request.account_id],
     );

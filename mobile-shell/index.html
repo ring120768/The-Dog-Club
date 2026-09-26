@@ -233,7 +233,8 @@
         color: #587069;
         line-height: 1.4;
       }
-      .booking-list {
+      .booking-list,
+      .session-list {
         display: grid;
         gap: 9px;
         margin: 10px 0 0;
@@ -243,6 +244,27 @@
       .booking-list li {
         padding-top: 9px;
         border-top: 1px solid rgb(35 84 72 / 12%);
+      }
+      .session-panel {
+        margin-top: 24px;
+        padding-top: 18px;
+        border-top: 1px solid rgb(35 84 72 / 12%);
+      }
+      .session-panel h3 {
+        margin: 5px 0;
+      }
+      .session-list li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-top: 9px;
+        border-top: 1px solid rgb(35 84 72 / 12%);
+      }
+      .session-list small {
+        display: block;
+        margin-top: 3px;
+        color: #60746f;
       }
       .booking-actions {
         display: flex;
@@ -375,8 +397,9 @@
         </form>
         <p id="login-message" class="message" role="alert"></p>
         <p class="muted setup">
-          This development build keeps your password and session in memory only.
-          Closing or refreshing the app signs you out.
+          Native builds keep the short-lived session in Keychain or Android
+          Keystore. Your password is never stored. Browser previews sign out on
+          refresh.
         </p>
       </section>
       <section id="club-view" class="card hidden">
@@ -392,6 +415,13 @@
         <p id="account-email" class="muted"></p>
         <div id="club-list" class="club-list"></div>
         <p id="club-message" class="message" role="alert"></p>
+        <section class="session-panel" aria-labelledby="sessions-heading">
+          <span class="eyebrow">Account security</span>
+          <h3 id="sessions-heading">Signed-in devices</h3>
+          <p class="muted">Sign out a device you no longer recognise or use.</p>
+          <ul id="session-list" class="session-list"></ul>
+          <p id="session-message" class="message" role="status"></p>
+        </section>
       </section>
       <section id="dog-view" class="card hidden">
         <div class="topline">
