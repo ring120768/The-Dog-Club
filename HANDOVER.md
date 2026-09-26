@@ -336,3 +336,11 @@ The simulator uses the same service-payment event lifecycle as the Stripe adapte
 Focused TypeScript and four new tests pass. Browser acceptance created checkout `26e5cf8b-da13-41fa-b8a6-966b4dcd10b3` for Bertie's £65 Member full groom, rendered the labelled payment wall, completed it and displayed the confirmed result. A direct local ledger read then showed booking `099d4df5-7423-4540-bc80-835ea6b16fc7` as `confirmed`, the checkout as `completed`, the payment as `captured` for 6,500 pence GBP and the capacity hold cleared. Production remains untouched.
 
 Next: retain this simulator for demonstrations, but do not describe payments as connected. A real Stripe sandbox Checkout plus signed webhook sequence against a reviewed HTTPS non-production deployment remains the payment acceptance gate.
+
+## Local demo activity-reset checkpoint — 26/09/2026
+
+Branch `codex/demo-reset`, stacked on `codex/demo-service-paywall`. The local platform-owner console now exposes a confirmation-gated reset for each synthetic operator. It transactionally removes grooming bookings and visit history, service-payment attempts/payments/exceptions, booking-linked grooming-credit entries and admission visit history while preserving branding, accounts, dogs, approvals, subscriptions and opening benefit allocations, services, resources, staffing and rotas.
+
+The server permits the reset only in explicit non-production local demo mode, refuses `DOGCLUB_DB=supabase`, rechecks platform-owner authority and rejects any club with a member address outside the reserved `@demo.invalid` domain. Browser acceptance proved the unchecked request is rejected and a confirmed Willow reset removed its existing demonstration activity while the operator remained Demo ready. Production remains untouched.
+
+Validation: TypeScript, all 131 isolated tests and the production Next.js build pass. Next: keep the reset behind the same local-only boundary while preparing the repeatable member-to-manager demonstration script.

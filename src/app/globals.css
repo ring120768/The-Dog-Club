@@ -866,6 +866,41 @@ textarea {
   margin-top: 22px;
   line-height: 1.5;
 }
+
+.demo-reset {
+  border-top: 1px solid var(--line);
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+}
+
+.demo-reset summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.demo-reset p {
+  font-size: 0.82rem;
+  margin: 0.6rem 0;
+}
+
+.demo-reset .check-line {
+  align-items: flex-start;
+  display: flex;
+  font-size: 0.78rem;
+  gap: 0.5rem;
+  line-height: 1.35;
+  margin-bottom: 0.65rem;
+}
+
+.demo-reset input[type="checkbox"] {
+  margin-top: 0.15rem;
+}
+
+.text-button.danger {
+  color: #9d342b;
+}
 .error,
 .success {
   padding: 13px 16px;
