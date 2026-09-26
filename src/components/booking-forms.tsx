@@ -3,7 +3,9 @@ import { useActionState } from "react";
 import {
   cancelBookingAction,
   closeResourceAction,
+  createLocationAction,
   reserveBookingAction,
+  setInventoryActiveAction,
   setupBookingAction,
 } from "@/app/booking-actions";
 
@@ -27,9 +29,13 @@ function Result({ state }: { state: { error?: string; success?: string } }) {
 export function BookingSetupForm({
   club,
   slug,
+  locations,
+  staff,
 }: {
   club: string;
   slug: string;
+  locations: { id: string; name: string; active: boolean }[];
+  staff: { account_id: string; email: string }[];
 }) {
   const [state, action, pending] = useActionState(
     setupBookingAction.bind(null, club, slug),
@@ -38,6 +44,30 @@ export function BookingSetupForm({
   return (
     <form action={action} className="profile-form booking-panel">
       <fieldset disabled={pending} className="editor-fields">
+        <div className="field-pair">
+          <label>
+            Venue location
+            <select name="location_id" required>
+              {locations
+                .filter((item) => item.active)
+                .map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label>
+            Qualified groomer
+            <select name="staff_id" required>
+              {staff.map((person) => (
+                <option key={person.account_id} value={person.account_id}>
+                  {person.email}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         <label>
           Service name
           <input
@@ -161,13 +191,77 @@ export function BookingSetupForm({
           </label>
         </div>
         <small>
-          This first slice assigns the signed-in manager as the qualified
-          groomer and publishes the dated shift immediately.
+          The selected groomer is qualified for this service and the dated shift
+          is published immediately.
         </small>
       </fieldset>
       <Result state={state} />
       <button className="button" disabled={pending}>
         {pending ? "Publishing…" : "Create bookable setup"}
+      </button>
+    </form>
+  );
+}
+
+export function LocationForm({ club, slug }: { club: string; slug: string }) {
+  const [state, action, pending] = useActionState(
+    createLocationAction.bind(null, club, slug),
+    {},
+  );
+  return (
+    <form action={action} className="profile-form booking-panel">
+      <fieldset disabled={pending} className="editor-fields">
+        <div className="field-pair">
+          <label>
+            Location name
+            <input
+              name="name"
+              required
+              minLength={2}
+              maxLength={100}
+              placeholder="Chiswick club"
+            />
+          </label>
+          <label>
+            Address label
+            <input
+              name="address_label"
+              maxLength={200}
+              placeholder="Chiswick High Road, London"
+            />
+          </label>
+        </div>
+      </fieldset>
+      <Result state={state} />
+      <button className="button" disabled={pending}>
+        {pending ? "Adding…" : "Add location"}
+      </button>
+    </form>
+  );
+}
+
+export function InventoryToggleForm({
+  club,
+  slug,
+  kind,
+  id,
+  active,
+}: {
+  club: string;
+  slug: string;
+  kind: "location" | "service" | "resource";
+  id: string;
+  active: boolean;
+}) {
+  const [state, action, pending] = useActionState(
+    setInventoryActiveAction.bind(null, club, slug, kind, id, !active),
+    {},
+  );
+  return (
+    <form action={action}>
+      <Result state={state} />
+      <button className="text-button" disabled={pending}>
+        {pending ? "Saving…" : active ? "Retire" : "Restore"}
       </button>
     </form>
   );

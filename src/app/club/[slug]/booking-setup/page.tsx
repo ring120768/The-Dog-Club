@@ -6,6 +6,8 @@ import { clubsFor } from "@/lib/dogs";
 import { bookingSetupFor } from "@/lib/bookings";
 import {
   BookingSetupForm,
+  InventoryToggleForm,
+  LocationForm,
   ResourceClosureForm,
 } from "@/components/booking-forms";
 
@@ -25,7 +27,9 @@ export default async function BookingSetupPage({
   const account = await requireAccount();
   const db = await database();
   const club = (await clubsFor(db, account.id)).find(
-    (item) => item.slug === slug && item.role === "manager",
+    (item) =>
+      item.slug === slug &&
+      (item.role === "manager" || item.can_manage_booking_setup),
   );
   if (!club) notFound();
   const setup = await bookingSetupFor(db, account.id, club.id);
@@ -38,19 +42,88 @@ export default async function BookingSetupPage({
         Publish a dated service, station and qualified shift. Times use
         Europe/London.
       </p>
-      <BookingSetupForm club={club.id} slug={slug} />
+      <section>
+        <h2>Venue locations</h2>
+        <p className="intro">
+          Locations keep stations and shifts together. All times use
+          Europe/London.
+        </p>
+        <LocationForm club={club.id} slug={slug} />
+        {setup.locations.map((location) => (
+          <article className="booking-card" key={location.id}>
+            <div>
+              <strong>{location.name}</strong>
+              <p>
+                {location.address_label || "No address label"} ·{" "}
+                {location.active ? "active" : "retired"}
+              </p>
+            </div>
+            <InventoryToggleForm
+              club={club.id}
+              slug={slug}
+              kind="location"
+              id={location.id}
+              active={location.active}
+            />
+          </article>
+        ))}
+      </section>
+      <BookingSetupForm
+        club={club.id}
+        slug={slug}
+        locations={setup.locations}
+        staff={setup.staff}
+      />
       <section className="booking-summary">
         <h2>Current setup</h2>
         <p>
           {setup.services.length} services · {setup.resources.length} stations ·{" "}
           {setup.shifts.length} shifts
         </p>
+        <h3>Services</h3>
+        {setup.services.map((service) => (
+          <article key={service.id}>
+            <div>
+              <strong>{service.name}</strong>
+              <span> · {service.active ? "active" : "retired"}</span>
+            </div>
+            <InventoryToggleForm
+              club={club.id}
+              slug={slug}
+              kind="service"
+              id={service.id}
+              active={service.active}
+            />
+          </article>
+        ))}
+        <h3>Stations</h3>
+        {setup.resources.map((resource) => (
+          <article key={resource.id}>
+            <div>
+              <strong>{resource.name}</strong>
+              <span>
+                {" "}
+                · {resource.location_name} ·{" "}
+                {resource.active ? "active" : "retired"}
+              </span>
+            </div>
+            <InventoryToggleForm
+              club={club.id}
+              slug={slug}
+              kind="resource"
+              id={resource.id}
+              active={resource.active}
+            />
+          </article>
+        ))}
+        <h3>Published shifts</h3>
         {setup.shifts.map((shift) => (
           <article key={shift.id}>
             <strong>{londonDateTime(shift.starts_at)}</strong>
             <span>
               {" "}
-              to {londonDateTime(shift.ends_at)} · {shift.status}
+              to {londonDateTime(shift.ends_at)} · {shift.staff_email} ·{" "}
+              {shift.location_name} · {shift.status}
             </span>
           </article>
         ))}

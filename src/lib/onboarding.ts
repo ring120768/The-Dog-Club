@@ -168,6 +168,10 @@ export async function acceptInvite(
         [club, id],
       );
       await tx.query(
+        "INSERT INTO club_locations(id,club_id,name,address_label) VALUES($1,$2,'Main venue',$3)",
+        [randomUUID(), club, b.location],
+      );
+      await tx.query(
         "INSERT INTO club_config_events(club_id,actor_id,action,changes) VALUES($1,$2,'club.created',$3)",
         [
           club,

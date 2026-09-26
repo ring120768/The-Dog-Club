@@ -7,8 +7,10 @@ import { database } from "@/lib/database";
 import {
   cancelBooking,
   closeResource,
+  createLocation,
   createBookingSetup,
   reserveBooking,
+  setInventoryActive,
 } from "@/lib/bookings";
 import { OnboardingError } from "@/lib/onboarding";
 
@@ -67,6 +69,52 @@ export async function closeResourceAction(
   revalidatePath(`/club/${slug}/booking-setup`);
   revalidatePath(`/club/${slug}/bookings`);
   return { success: "Station closure recorded." };
+}
+
+export async function createLocationAction(
+  club: string,
+  slug: string,
+  _state: BookingState,
+  form: FormData,
+): Promise<BookingState> {
+  const actor = await requireAccount();
+  try {
+    await createLocation(
+      await database(),
+      actor.id,
+      club,
+      Object.fromEntries(form),
+    );
+  } catch (error) {
+    return errorState(error);
+  }
+  revalidatePath(`/club/${slug}/booking-setup`);
+  return { success: "Venue location added." };
+}
+
+export async function setInventoryActiveAction(
+  club: string,
+  slug: string,
+  kind: "location" | "service" | "resource",
+  id: string,
+  active: boolean,
+  _state: BookingState,
+): Promise<BookingState> {
+  const actor = await requireAccount();
+  try {
+    await setInventoryActive(await database(), actor.id, club, {
+      kind,
+      id,
+      active: String(active),
+    });
+  } catch (error) {
+    return errorState(error);
+  }
+  revalidatePath(`/club/${slug}/booking-setup`);
+  revalidatePath(`/club/${slug}/bookings`);
+  return {
+    success: active ? "Inventory item restored." : "Inventory item retired.",
+  };
 }
 
 export async function reserveBookingAction(

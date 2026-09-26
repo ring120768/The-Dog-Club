@@ -21,7 +21,7 @@ export type Db = Queryable & {
 
 function wrap(client: pg.Pool | pg.PoolClient): Queryable {
   return {
-    query: async <T,>(sql: string, params?: unknown[]) => {
+    query: async <T>(sql: string, params?: unknown[]) => {
       const r = await client.query(sql, params);
       return { rows: r.rows as T[], affectedRows: r.rowCount ?? 0 };
     },
@@ -98,14 +98,16 @@ export async function seed(db: Db) {
       ["coast-member", "coast@demo.invalid"],
       ["platform-owner", "owner@demo.invalid"],
     ]) {
-      await tx.query("INSERT INTO accounts(id,email,password_hash) VALUES ($1,$2,$3)", [
-        id,
-        email,
-        hashPassword("PawsTogether!26"),
-      ]);
+      await tx.query(
+        "INSERT INTO accounts(id,email,password_hash) VALUES ($1,$2,$3)",
+        [id, email, hashPassword("PawsTogether!26")],
+      );
     }
     await tx.exec(`INSERT INTO platform_owners VALUES ('platform-owner');
   INSERT INTO memberships VALUES ('willow','alice','member'),('willow','bea','member'),('willow','manager','manager'),('coast','coast-member','member');
+  INSERT INTO club_locations(id,club_id,name,address_label) VALUES
+  ('00000000-0000-4000-8000-000000000101','willow','Main venue','Chiswick, London'),
+  ('00000000-0000-4000-8000-000000000102','coast','Main venue','Brighton, Sussex');
   INSERT INTO dogs VALUES
   ('00000000-0000-4000-8000-000000000001','willow','alice','Bertie','Cocker spaniel','Chief crumb inspector. Excellent listener, especially near the biscuit tin.','sand','members'),
   ('00000000-0000-4000-8000-000000000002','willow','bea','Mabel','Golden retriever','Here for the company. Staying for the belly rubs.','rose','public'),

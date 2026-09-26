@@ -53,3 +53,11 @@ Account recovery stays support-assisted in the local demo. A deployed environmen
 See [implementation scope](docs/IMPLEMENTATION.md) and [verification](docs/VERIFICATION.md). Photo upload, replacement and removal now work with the profile’s visibility rules. JPEG, PNG and still WebP are supported; HEIC and animated images are not. See [photo design](docs/PHOTO_UPLOADS.md). Managed production storage, native mobile clients, operator onboarding and live integrations remain outstanding.
 
 GitHub repository: [ring120768/The-Dog-Club](https://github.com/ring120768/The-Dog-Club).
+
+## Staff permissions and operational inventory
+
+Managers can assign an existing club member as manager, groomer, reception or café staff; grant staff-administration and booking/inventory permissions independently; record service qualifications; reactivate or deactivate access; and review an append-only access history. Deactivation retains historical booking ownership while immediately removing delegated workspace access and the groomer from future availability.
+
+Every operator receives a default venue location during onboarding. Managers and authorised staff can add locations, choose the location and qualified groomer for a dated shift, and retire or restore services and stations. Availability only combines an active groomer, published shift and station at the same venue. A location with active stations or published shifts cannot be retired accidentally.
+
+Staff invitation currently uses two steps: invite the person as a member, then assign staff access. Private care and daily reception access remain manager-only until their narrower permission slices are reviewed and tested. Production remains untouched.
