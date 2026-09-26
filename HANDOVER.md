@@ -22,7 +22,7 @@ Working folder on Ringo's Mac: `~/Documents/ChatGPT/The Dog club` (not `DogClubP
 1. Remove local-demo badges and prefilled synthetic credentials from production UI. They remain in deployed code but the synthetic accounts do not exist in the production database.
 2. Review and apply the onboarding migration in a non-production PostgreSQL environment, then merge the stacked logo and onboarding PRs before using invitations with the first actual club. Production still has only the platform-owner account and no clubs.
 3. Resolve the Supabase advisor warning for public.rls_auto_enable(). Effective EXECUTE is inherited from PUBLIC; revoking only anon/authenticated is insufficient. Review and remove the PUBLIC grant as appropriate, retain required administrative access, then verify effective privileges and advisors. See the verification report for the event-trigger caveat.
-4. Replace the initial testing password before real-customer use. Password-change/reset UI is not implemented yet. Do not write credentials into handovers.
+4. Replace the initial testing password before real-customer use. Support-assisted reset is implemented in the recovery checkpoint below; automated verified delivery and staff MFA remain incomplete. Do not write credentials into handovers.
 5. Preview has not been connected to the production database. Do not add production credentials to previews casually.
 
 ## Housekeeping
@@ -116,3 +116,11 @@ Branch `codex/club-admission-capacity`, stacked on the unmerged booking-credit b
 Authenticated reception staff use the pass to verify a current paid-through usable membership, selected dogs and live capacity. Admission locks the venue setting while rechecking both counts; concurrent arrivals cannot overfill it. A repeat scan returns the existing active visit without incrementing occupancy, and idempotent checkout releases both human and dog capacity. Household adults, guests, documents/expiry, admission exceptions, camera QR scanning and zone/lounge capacity remain deferred.
 
 Validation: TypeScript and all 67 isolated tests pass. Four admission tests cover pass privacy and household scope, configuration/membership/dog-eligibility gates, concurrent and duplicate capacity protection, idempotent checkout and tenant isolation. Local browser acceptance used Alice and Bertie: a 16-character pass was created, reception configured 1 human / 1 dog, approved Bertie, admitted them to reach 1 / 1, recognised the repeat lookup as already inside, then checked them out to return occupancy to 0 / 0. Production remains untouched; rehearse this migration with the preceding stack in non-production PostgreSQL before rollout.
+
+## Account recovery checkpoint
+
+Branch `codex/account-recovery`, stacked on the unmerged admission branch. A signed-out user can submit a generic password-help request without learning whether an account exists. Known accounts are limited to three requests per hour. The platform owner reviews the private queue, verifies the requester outside the app and creates a 30-minute one-time link; the raw token is shown once and only its SHA-256 hash is stored.
+
+Completing recovery changes the salted password hash, consumes the link, expires other links, clears failed-login throttling and deletes every session for the account. Recovery tables are server-only with forced RLS and no `club_app` grants. Automated email delivery, staff MFA and the support identity-verification policy remain rollout work, so the UI does not claim that email was sent.
+
+Validation: TypeScript and all 72 isolated tests pass. Five recovery tests cover non-enumerating requests, rate limits, platform-owner authority, dismissal, token hashing, expiry, single use, password replacement, session invalidation and restricted-role denial. Local browser acceptance requested help for Alice, created a link as platform owner, rejected the old password, accepted the new password and restored the documented synthetic credential through the same audited flow. Production remains untouched; rehearse the migration in non-production PostgreSQL before rollout.

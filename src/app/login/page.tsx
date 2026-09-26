@@ -1,14 +1,15 @@
 import { DemoLogo } from "@/components/demo-logo";
 import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 import { loginAction } from "../actions";
 import { DogAvatar } from "@/components/dog-avatar";
 export const dynamic = "force-dynamic";
 export default async function Login({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; recovered?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, recovered } = await searchParams;
   return (
     <main className="login-page">
       <section className="login-story">
@@ -35,6 +36,11 @@ export default async function Login({
         <span className="badge">LOCAL DEMO · FICTIONAL CLUBS</span>
         <h2>Welcome to the pack.</h2>
         <p>Sign in to make yourself at home.</p>
+        {recovered && (
+          <p className="success" role="status">
+            Password updated. Sign in with your new password.
+          </p>
+        )}
         <form action={loginAction} className="profile-form">
           <label>
             Email address
@@ -66,6 +72,9 @@ export default async function Login({
             Come on in <span>→</span>
           </button>
         </form>
+        <Link className="inline-link" href="/recover">
+          Forgotten your password?
+        </Link>
         <details className="demo-accounts">
           <summary>Explore the demo accounts</summary>
           <p>
