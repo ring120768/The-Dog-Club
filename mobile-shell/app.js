@@ -28,7 +28,17 @@
     const value = window.Capacitor?.getPlatform?.();
     return value === "ios" || value === "android" ? value : "web_test";
   }
+  function serverConfiguration() {
+    const configured = window.DOG_CLUB_CONFIG;
+    if (!configured?.serverUrl) return { serverUrl: "", locked: false };
+    return {
+      serverUrl: safeServer(configured.serverUrl),
+      locked: configured.locked === true,
+    };
+  }
   function defaultServer() {
+    const configured = serverConfiguration();
+    if (configured.serverUrl) return configured.serverUrl;
     if (location.protocol === "http:" || location.protocol === "https:")
       return location.origin;
     return platform() === "android"
@@ -619,7 +629,10 @@
         await clearPersistedSession();
         return;
       }
-      state.server = safeServer(session.server);
+      const configured = serverConfiguration();
+      state.server = configured.locked
+        ? configured.serverUrl
+        : safeServer(session.server);
       state.token = session.token;
       state.sessionId = session.sessionId;
       state.sessionExpiresAt = session.expiresAt;
@@ -636,7 +649,12 @@
     }
   }
 
+  const configuredServer = serverConfiguration();
   byId("server").value = defaultServer();
+  if (configuredServer.locked) {
+    byId("server").readOnly = true;
+    byId("server-setup").classList.add("hidden");
+  }
   byId("login-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;

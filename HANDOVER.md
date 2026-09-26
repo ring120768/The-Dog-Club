@@ -2,6 +2,14 @@
 
 Updated 26/09/2026
 
+## Mobile HTTPS staging configuration checkpoint — 26/09/2026
+
+Branch `codex/mobile-https-staging`, stacked on `codex/mobile-secure-sessions`. Native assets are now generated into ignored `mobile-build/`. Setting `MOBILE_APP_SERVER_URL` to a reviewed HTTPS origin compiles that origin into both native apps, hides the editable server field and overrides any older server saved with a Keychain/Keystore session. The preparation command rejects HTTP, credentials, paths, queries and fragments. Builds without the variable retain the local development field and must not be signed or distributed.
+
+`npm run mobile:verify-staging` performs a secret-safe acceptance probe with a synthetic staging member: sign in, list club memberships, confirm the current device session, then revoke the probe session in a `finally` block. It logs counts and status only. Preview currently has no Vercel environment variables; Production alone has `DOGCLUB_DB` and `DATABASE_URL`. Do not copy that production connection into Preview. Provision a separate synthetic Supabase staging database, use its transaction-pooler connection and follow `docs/MOBILE_STAGING.md` before claiming HTTPS native acceptance.
+
+Validation: TypeScript, all 138 tests and the local Next.js production build pass. The Android build in the primary checkout is blocked by the known untracked duplicate `android/app/src/main/res/xml/config 2.xml`; preserve that user file. Re-run Android and iOS from a clean worktree after this commit. Production data, environment variables and deployment remain untouched.
+
 Live activation completed on 25/09/2026 after the initial verification. Production now has DOGCLUB_DB=supabase and a sensitive DATABASE_URL (production only). Deployment `dpl_JBmSJCdR6jy351PK6VeDWsis93Wf` is READY and serves https://the-dog-club-psi.vercel.app from commit `5744bc2`.
 
 The requested initial platform-owner account was created with a salted password hash; no synthetic accounts or clubs were seeded. Actual browser sign-in reached the platform-owner console. The absent demo public profile returns 404 instead of 500. Credentials are intentionally omitted from this handover.

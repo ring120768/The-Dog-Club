@@ -27,3 +27,5 @@ coverage/
 
 # Supabase CLI local cache
 supabase/.temp/
+.vercel
+mobile-build/

@@ -14,7 +14,7 @@ Photo selection uses the operating system's document picker with no camera captu
 
 Mobile sessions use 256-bit random bearer tokens. Only a SHA-256 digest is stored server-side, sessions expire after eight hours and sign-out revokes the current session immediately. The client keeps the bearer token in JavaScript memory only, so closing or refreshing the app signs the member out. This is deliberately conservative until Keychain/Keystore-backed storage, biometric access and device-loss handling have been reviewed together.
 
-The API accepts the fixed Capacitor origins and optional exact origins from `MOBILE_ALLOWED_ORIGINS`; wildcard CORS is not used. Android and iOS share the same server contract and existing tenant row-level security. The server address field is visible only because this is a development build. A signed release must compile a reviewed HTTPS production endpoint into the app and remove that field.
+The API accepts the fixed Capacitor origins and optional exact origins from `MOBILE_ALLOWED_ORIGINS`; wildcard CORS is not used. Android and iOS share the same server contract and existing tenant row-level security. `MOBILE_APP_SERVER_URL` compiles a reviewed HTTPS origin into native assets and removes the visible server field. Builds without it retain the local development field and must not be signed or distributed. The isolated database boundary and acceptance command are documented in `docs/MOBILE_STAGING.md`.
 
 Capacitor 8.5.2 was not retained because its CLI dependency tree reported a moderate `uuid` advisory through the Xcode parser. Version 8.4.3 has a clean `npm audit` result and builds with the installed toolchains.
 
@@ -26,7 +26,7 @@ npm run mobile:ios
 npm run mobile:android
 ```
 
-`mobile:sync` copies the current demo image into the bundled shell and synchronises both native projects. Opening a platform IDE is intentionally separate from building or signing a release.
+`mobile:sync` prepares a fresh `mobile-build/`, copies the current demo image, compiles the optional reviewed server origin and synchronises both native projects. Opening a platform IDE is intentionally separate from building or signing a release.
 
 Verified locally:
 
