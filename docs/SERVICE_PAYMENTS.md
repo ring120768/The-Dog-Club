@@ -16,6 +16,8 @@ The bearer-authorised mobile API now creates the hold and returns the hosted URL
 
 No real Stripe sandbox session has been created, no automatic refund is implemented and production remains untouched.
 
+Expired holds are excluded from availability and reported as expired immediately from their timestamp, without waiting for a background task. A protected Vercel maintenance route now reconciles those effective expiries into persisted cancelled bookings, expired checkout sessions and audit events in bounded batches. Its checked-in schedule runs once daily so it deploys on Vercel Hobby as well as paid plans. `CRON_SECRET` is mandatory and must contain at least 16 characters; an absent or weak value fails closed. A future Pro deployment may increase the schedule frequency after operational review, but correctness does not depend on cron timing.
+
 ## Booking and payment lifecycle
 
 1. The member selects an approved dog, service, date and live slot and accepts the cancellation terms.
@@ -83,3 +85,5 @@ Before pilot acceptance, run a real Stripe sandbox Checkout and Stripe CLI webho
 - [Dynamic payment methods](https://docs.stripe.com/payments/payment-methods/dynamic-payment-methods)
 - [Stripe idempotent requests](https://docs.stripe.com/api/idempotent_requests)
 - [Stripe sandboxes](https://docs.stripe.com/sandboxes)
+- [Vercel Cron Jobs usage and plan limits](https://vercel.com/docs/cron-jobs/usage-and-pricing)
+- [Vercel Cron Jobs authentication](https://vercel.com/docs/cron-jobs/manage-cron-jobs)

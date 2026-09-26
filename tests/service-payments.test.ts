@@ -5,8 +5,8 @@ import { reviewApplication, submitApplication } from "../src/lib/applications";
 import { availabilityFor, createBookingSetup } from "../src/lib/bookings";
 import { initialise, type Db } from "../src/lib/database";
 import {
-  expireServicePaymentHolds,
   prepareServiceCheckout,
+  reconcileExpiredServicePaymentHolds,
   serviceCheckoutStatusFor,
 } from "../src/lib/service-payments";
 import type {
@@ -290,12 +290,14 @@ test("late payment is isolated for manual reconciliation", async () => {
       [attempt.bookingId],
     )
   ).rows[0];
-  assert.equal(
-    await expireServicePaymentHolds(
+  assert.deepEqual(
+    await reconcileExpiredServicePaymentHolds(
       db,
       new Date(new Date(checkout.expires_at).getTime() + 1),
+      1,
+      2,
     ),
-    1,
+    { expiredHolds: 1, moreMayRemain: false },
   );
   assert.equal(
     (await serviceCheckoutStatusFor(db, "alice", club, attempt.bookingId))
