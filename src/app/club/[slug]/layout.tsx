@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   CalendarDays,
+  CreditCard,
   Dog,
   House,
   LogOut,
@@ -48,6 +49,10 @@ export default async function ClubLayout({
           <Link href={`/club/${slug}/bookings`}>
             <CalendarDays size={19} />
             Grooming bookings
+          </Link>
+          <Link href={`/club/${slug}/memberships`}>
+            <CreditCard size={19} />
+            Membership
           </Link>
           {club.role === "manager" && (
             <>

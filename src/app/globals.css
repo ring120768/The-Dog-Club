@@ -823,10 +823,145 @@ th {
 .member-visit-history {
   margin-top: 13px;
 }
+.membership-page > h1 {
+  margin-top: 12px;
+}
+.membership-plans,
+.membership-list,
+.membership-manager-grid {
+  margin-top: 42px;
+}
+.membership-plan-grid,
+.membership-manager-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.membership-plan-card,
+.membership-card,
+.membership-panel {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 22px;
+}
+.membership-plan-card h3 {
+  font: 40px var(--serif);
+  margin: 8px 0 0;
+}
+.membership-plan-card > p,
+.membership-card > p {
+  color: var(--muted);
+}
+.membership-plan-card dl {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 10px 16px;
+  margin-top: 20px;
+  font-size: 12px;
+}
+.membership-plan-card dt {
+  font-weight: 750;
+}
+.membership-plan-card dd {
+  color: var(--muted);
+}
+.membership-manager-grid > div > h2 {
+  margin: 7px 0 16px;
+}
+.membership-form fieldset,
+.membership-inline-form {
+  display: grid;
+  gap: 13px;
+}
+.membership-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 14px;
+}
+.membership-form label,
+.membership-inline-form label {
+  display: grid;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 650;
+}
+.membership-form .consent-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+.membership-card {
+  margin-top: 14px;
+  display: grid;
+  gap: 14px;
+}
+.membership-card-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: start;
+}
+.membership-card-heading h3 {
+  font-size: 28px;
+  margin-top: 6px;
+}
+.credit-balance {
+  min-width: 130px;
+  padding: 14px;
+  border-radius: 10px;
+  background: #eef0e8;
+  text-align: center;
+}
+.credit-balance strong {
+  display: block;
+  font: 34px var(--serif);
+}
+.credit-balance span {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.demo-payment-note,
+.cancellation-date {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #fff1d3;
+  color: #6d4b05 !important;
+  font-size: 12px;
+  font-weight: 650;
+}
+.benefit-history summary,
+.membership-admin-actions summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+}
+.benefit-history ol {
+  margin: 10px 0 0 20px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.membership-admin-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.membership-admin-actions form {
+  margin-top: 12px;
+}
 @media (max-width: 760px) {
   .visit-card-main,
-  .visit-audit {
+  .visit-audit,
+  .membership-plan-grid,
+  .membership-manager-grid,
+  .membership-admin-actions {
     grid-template-columns: 1fr;
+  }
+  .membership-card-heading {
+    display: grid;
   }
 }
 .public-profile {

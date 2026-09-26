@@ -160,10 +160,7 @@ export default async function ClubPage({
       </section>
       <div className="coming-next">
         <span className="eyebrow">GROWING WITH YOUR CLUB</span>
-        <p>
-          Memberships, café services and payments are coming in later
-          milestones.
-        </p>
+        <p>Café services and payments are coming in later milestones.</p>
         <span>Not yet connected</span>
       </div>
     </main>
