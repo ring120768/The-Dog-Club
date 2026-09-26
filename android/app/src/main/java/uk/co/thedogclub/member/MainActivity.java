@@ -10,6 +10,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(LocalDemoBrowserPlugin.class);
+        registerPlugin(SessionVaultPlugin.class);
         super.onCreate(savedInstanceState);
 
         // The labelled local demo may call the host machine through 10.0.2.2.

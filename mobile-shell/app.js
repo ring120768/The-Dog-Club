@@ -2,6 +2,8 @@
   "use strict";
   const state = {
     token: "",
+    sessionId: "",
+    sessionExpiresAt: "",
     server: "",
     clubs: [],
     club: null,
@@ -33,6 +35,34 @@
       ? "http://10.0.2.2:3100"
       : "http://127.0.0.1:3100";
   }
+  function deviceName() {
+    if (platform() === "ios") return "Apple device";
+    if (platform() === "android") return "Android device";
+    return "Browser preview";
+  }
+  function sessionVault() {
+    if (platform() === "web_test") return null;
+    return window.Capacitor?.Plugins?.SessionVault ?? null;
+  }
+  async function persistSession(session) {
+    const vault = sessionVault();
+    if (!vault?.set) return;
+    state.sessionExpiresAt = new Date(
+      Date.now() + session.expiresInSeconds * 1000,
+    ).toISOString();
+    await vault.set({
+      value: JSON.stringify({
+        token: state.token,
+        sessionId: state.sessionId,
+        server: state.server,
+        expiresAt: state.sessionExpiresAt,
+      }),
+    });
+  }
+  async function clearPersistedSession() {
+    const vault = sessionVault();
+    if (vault?.clear) await vault.clear();
+  }
   function show(view) {
     views.forEach((id) => byId(id).classList.toggle("hidden", id !== view));
   }
@@ -60,12 +90,14 @@
       headers,
     });
     if (response.status === 401 && path !== "/api/mobile/session")
-      logout(false);
+      void logout(false);
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
-      throw new Error(
+      const error = new Error(
         body.error || "The Dog Club server could not complete that request.",
       );
+      error.status = response.status;
+      throw error;
     }
     return response.status === 204 ? null : response.json();
   }
@@ -123,6 +155,54 @@
         "There are no available club memberships on this account.";
     show("club-view");
   }
+  function renderSessions(payload) {
+    const list = byId("session-list");
+    list.replaceChildren();
+    payload.sessions.forEach((session) => {
+      const item = document.createElement("li");
+      const details = document.createElement("div");
+      const title = document.createElement("strong");
+      title.textContent = session.current
+        ? `${session.deviceName} · This device`
+        : session.deviceName;
+      const used = document.createElement("small");
+      used.textContent = `Last used ${formatDateTime(session.lastUsedAt)}`;
+      details.append(title, used);
+      item.append(details);
+      if (!session.current) {
+        const revoke = document.createElement("button");
+        revoke.type = "button";
+        revoke.className = "secondary";
+        revoke.textContent = "Sign out device";
+        revoke.addEventListener("click", async () => {
+          revoke.disabled = true;
+          byId("session-message").textContent = "";
+          try {
+            await request(
+              `/api/mobile/sessions/${encodeURIComponent(session.id)}`,
+              { method: "DELETE" },
+            );
+            await refreshSessions();
+            byId("session-message").textContent =
+              "That device has been signed out.";
+          } catch (error) {
+            byId("session-message").textContent = error.message;
+            revoke.disabled = false;
+          }
+        });
+        item.append(revoke);
+      }
+      list.append(item);
+    });
+  }
+  async function refreshSessions() {
+    renderSessions(await request("/api/mobile/sessions"));
+  }
+  async function enterSignedInApp() {
+    renderClubs(await request("/api/mobile/clubs"));
+    await refreshSessions();
+  }
+
   function renderMemberHome(payload) {
     const membership = payload.membership;
     byId("membership-heading").textContent = membership
@@ -432,8 +512,7 @@
     }
   }
   async function openHostedCheckout(url) {
-    const localDemoBrowser =
-      window.Capacitor?.Plugins?.LocalDemoBrowser;
+    const localDemoBrowser = window.Capacitor?.Plugins?.LocalDemoBrowser;
     if (
       platform() === "android" &&
       isLocalHttpUrl(url) &&
@@ -505,7 +584,14 @@
   }
   async function logout(notifyServer = true) {
     const token = state.token;
+    if (notifyServer && token)
+      await request("/api/mobile/session", { method: "DELETE" }).catch(
+        () => {},
+      );
+    await clearPersistedSession().catch(() => {});
     state.token = "";
+    state.sessionId = "";
+    state.sessionExpiresAt = "";
     state.clubs = [];
     state.club = null;
     state.dog = null;
@@ -516,12 +602,37 @@
     clearPhoto();
     show("login-view");
     byId("password").value = "";
-    if (notifyServer && token) {
-      state.token = token;
-      await request("/api/mobile/session", { method: "DELETE" }).catch(
-        () => {},
-      );
+  }
+  async function restorePersistedSession() {
+    const vault = sessionVault();
+    if (!vault?.get) return;
+    const message = byId("login-message");
+    try {
+      const stored = await vault.get();
+      if (!stored.value) return;
+      const session = JSON.parse(stored.value);
+      if (
+        !/^[a-f0-9]{64}$/.test(session.token) ||
+        !/^[0-9a-f-]{36}$/i.test(session.sessionId) ||
+        new Date(session.expiresAt).getTime() <= Date.now()
+      ) {
+        await clearPersistedSession();
+        return;
+      }
+      state.server = safeServer(session.server);
+      state.token = session.token;
+      state.sessionId = session.sessionId;
+      state.sessionExpiresAt = session.expiresAt;
+      byId("server").value = state.server;
+      await enterSignedInApp();
+    } catch (error) {
+      if (!state.token) await clearPersistedSession().catch(() => {});
       state.token = "";
+      state.sessionId = "";
+      message.textContent =
+        error.status === 401
+          ? "Your saved sign-in has expired or was signed out. Sign in again."
+          : "Your saved sign-in could not be restored. Check your connection and try again.";
     }
   }
 
@@ -540,14 +651,27 @@
           email: byId("email").value,
           password: byId("password").value,
           platform: platform(),
+          deviceName: deviceName(),
         }),
       });
       state.token = session.token;
+      state.sessionId = session.sessionId;
+      const persisted = await persistSession(session)
+        .then(() => true)
+        .catch(() => false);
       byId("password").value = "";
-      renderClubs(await request("/api/mobile/clubs"));
+      await enterSignedInApp();
+      if (!persisted && sessionVault())
+        byId("club-message").textContent =
+          "You are signed in for this visit, but secure session storage is unavailable.";
     } catch (error) {
+      const signedIn = Boolean(state.token);
       state.token = "";
-      message.textContent = error.message;
+      state.sessionId = "";
+      if (!signedIn) await clearPersistedSession().catch(() => {});
+      message.textContent = signedIn
+        ? "You signed in, but the club could not be loaded. Check your connection and reopen the app."
+        : error.message;
     } finally {
       setBusy(form, false);
     }
@@ -566,10 +690,7 @@
     resetCheckoutAttempt();
     updateBookingSummary();
   });
-  byId("booking-credit").addEventListener(
-    "change",
-    updateBookingPaymentNote,
-  );
+  byId("booking-credit").addEventListener("change", updateBookingPaymentNote);
   byId("booking-date").addEventListener("change", resetCheckoutAttempt);
   byId("booking-slots").addEventListener("change", resetCheckoutAttempt);
   byId("booking-payment-refresh").addEventListener(
@@ -769,4 +890,5 @@
   byId("sign-out").addEventListener("click", () => logout());
   byId("dog-sign-out").addEventListener("click", () => logout());
   byId("profile-sign-out").addEventListener("click", () => logout());
+  void restorePersistedSession();
 })();

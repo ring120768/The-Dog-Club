@@ -374,3 +374,13 @@ The rehearsal exposed four Android-local issues. The native Capacitor origin `ht
 Final validation passes: `npm run typecheck`, all 134 tests, `npm run build`, Capacitor sync and a clean Android debug assembly with Java 21. The pre-existing untracked duplicate resource `config 2.xml` was moved out only for assembly and restored automatically. Production, real Stripe and card data were untouched.
 
 Next: move both native clients to a reviewed HTTPS non-production endpoint, persist sessions through Keychain/Keystore with device-level revocation, and complete the real Stripe sandbox plus signed-webhook acceptance gate before signing or distribution.
+
+## Secure native-session checkpoint — 26/09/2026
+
+Branch `codex/mobile-secure-sessions`, stacked on `codex/android-demo-rehearsal`. The shared member client now persists its eight-hour bearer session on native devices without storing the member password. iOS uses a this-device-only Keychain item and Android uses AES-GCM with a non-exportable Android Keystore key; the encrypted Android preference contains only ciphertext and an IV. Browser previews remain memory-only.
+
+The club picker now lists the account's active signed-in devices, marks the current one and lets the member revoke another session. Session IDs and bounded generic device labels are additive to the session table. Revocation is account-scoped, unknown or cross-account identifiers receive the same empty response, password recovery revokes every native session, and any later 401 clears the local vault and returns the app to sign-in with accurate expired-or-signed-out copy.
+
+Validation passes: TypeScript, all 136 isolated tests, the production Next.js build, Capacitor sync, clean Android debug assembly with Java 21, unsigned iOS compilation and a normally signed simulator build. Interactive acceptance on both named simulators signed Alice in, rendered the current and other devices, terminated and relaunched into Willow without re-entering a password, then revoked the device from a temporary second session. Each next launch rejected the revoked token, cleared native storage and showed the accurate signed-out message. Android's private preference held ciphertext and an IV rather than the raw token or password; iOS restored through its this-device-only Keychain item. The temporary controller sessions were also revoked. Production and live Supabase remain untouched; the additive migration still needs its normal reviewed non-production rehearsal before deployment.
+
+Next: move both clients to a reviewed HTTPS non-production endpoint. Real Stripe sandbox and signed-webhook acceptance, app links, distribution signing and store distribution remain release gates.

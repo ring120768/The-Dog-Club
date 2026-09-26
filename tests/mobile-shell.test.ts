@@ -80,3 +80,19 @@ test("mobile upcoming bookings can move to a live replacement slot", async () =>
     /original price, grooming credits and cancellation terms stay unchanged/,
   );
 });
+
+test("native sessions use the secure vault and expose device revocation", async () => {
+  const [shell, script] = await Promise.all([
+    readFile(new URL("../mobile-shell/index.html", import.meta.url), "utf8"),
+    readFile(new URL("../mobile-shell/app.js", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(script, /Plugins\?\.SessionVault/);
+  assert.match(script, /persistSession/);
+  assert.match(script, /restorePersistedSession/);
+  assert.match(script, /clearPersistedSession/);
+  assert.match(script, /\/api\/mobile\/sessions/);
+  assert.match(script, /Sign out device/);
+  assert.match(shell, /Your password is never stored/);
+  assert.match(shell, /id="session-list"/);
+});

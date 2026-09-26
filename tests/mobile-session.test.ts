@@ -7,7 +7,9 @@ import { clubsFor, dogsFor } from "../src/lib/dogs";
 import {
   createMobileSession,
   mobileAccount,
+  mobileSessionsForAccount,
   revokeMobileSession,
+  revokeMobileSessionById,
 } from "../src/lib/mobile-session";
 import { testDatabase } from "./db";
 import {
@@ -47,10 +49,26 @@ test("mobile sign-in stores only a token hash and resolves the account", async (
   );
   assert.notEqual(stored.token_hash, session.token);
   assert.equal(stored.platform, "ios");
-  assert.deepEqual(await mobileAccount(db, `Bearer ${session.token}`), {
+  const account = await mobileAccount(db, `Bearer ${session.token}`);
+  assert.deepEqual(account, {
     id: "alice",
     email: "alice@demo.invalid",
+    mobileSessionId: session.sessionId,
   });
+  const devices = await mobileSessionsForAccount(
+    db,
+    account!.id,
+    account!.mobileSessionId,
+  );
+  assert.equal(
+    devices.some(
+      (device) =>
+        device.id === session.sessionId &&
+        device.deviceName === "Apple device" &&
+        device.current,
+    ),
+    true,
+  );
 });
 
 test("invalid credentials and malformed payloads have the same empty result", async () => {
@@ -115,6 +133,32 @@ test("revoked and expired mobile sessions stop resolving immediately", async () 
     [createHash("sha256").update(expired.token).digest("hex")],
   );
   assert.equal(await mobileAccount(db, `Bearer ${expired.token}`), null);
+});
+
+test("a member can revoke another device but not another account's session", async () => {
+  const aliceDevice = await createMobileSession(db, {
+    email: "alice@demo.invalid",
+    password: "PawsTogether!26",
+    platform: "android",
+    deviceName: "Pixel 9 Pro",
+  });
+  const beaDevice = await createMobileSession(db, {
+    email: "bea@demo.invalid",
+    password: "PawsTogether!26",
+    platform: "ios",
+    deviceName: "Bea's iPhone",
+  });
+  assert.ok(aliceDevice && beaDevice);
+  assert.equal(
+    await revokeMobileSessionById(db, "alice", beaDevice.sessionId),
+    false,
+  );
+  assert.ok(await mobileAccount(db, `Bearer ${beaDevice.token}`));
+  assert.equal(
+    await revokeMobileSessionById(db, "alice", aliceDevice.sessionId),
+    true,
+  );
+  assert.equal(await mobileAccount(db, `Bearer ${aliceDevice.token}`), null);
 });
 
 test("the restricted tenant role cannot inspect mobile sessions", async () => {
