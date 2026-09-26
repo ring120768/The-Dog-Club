@@ -80,3 +80,13 @@ Browser acceptance completed on 26/09/2026 with local synthetic data. A new £50
 Validation: TypeScript and all 49 isolated tests pass; six visit tests cover duplicate arrival, collector authorisation, one-shot ready fallback, correction history, collection verification and tenant/household isolation. Production schema and data remain untouched.
 
 Review before rollout: apply and test the booking and visit migrations together in non-production PostgreSQL. General café admission, membership/payment checks, venue capacity, walk-ins, household-adult permissions, automated delivery/retries and a formal collection identity policy remain incomplete.
+
+## Membership entitlement checkpoint
+
+Branch `codex/membership-entitlements`, stacked on the unmerged grooming visit branch. Managers can define GBP membership plans with inclusions, limits, additional-dog, renewal and cancellation terms; assign a clearly labelled demo entitlement to an existing club account; manage active, payment-issue, cancellation-scheduled and ended states; and record grooming-credit allocations, redemptions, restorations and adjustments in an append-only ledger. The ledger uses per-subscription locking, idempotency keys, actor/reason fields and balance checks. Member reads are restricted to their own account, while manager reads remain club-scoped.
+
+Browser acceptance completed on 26/09/2026 using local synthetic data. A manager created the £39 Care Demo plan with two grooming credits, assigned it to `member-walkthrough@demo.invalid`, redeemed one credit, and the member saw only their own plan, terms, remaining credit and explicit “Demo entitlement · no payment-provider confirmation” label. The member then scheduled cancellation for 26/10/2026 and retained the remaining benefit through the recorded period end.
+
+Validation: TypeScript and all 55 isolated tests pass. Six membership tests cover plan allocation, concurrent final-credit redemption, idempotent replay, restoration and payment-issue behaviour, cancellation/ended lifecycle, and tenant/household isolation. Production schema and data remain untouched.
+
+Review before rollout: rehearse the membership migration in non-production PostgreSQL and review effective grants. Stripe, webhooks, self-purchase, automatic renewals, billing recovery, proration/VAT, receipts/refunds, household-adult permissions and applying credits directly to a booking remain incomplete. Demo assignment must not be represented as payment confirmation.
