@@ -130,6 +130,14 @@ test("mobile CORS allows only native or explicitly configured origins", () => {
     )?.get("Access-Control-Allow-Origin"),
     "capacitor://localhost",
   );
+  assert.match(
+    mobileCorsHeaders(
+      new Request("https://example.test", {
+        headers: { origin: "capacitor://localhost" },
+      }),
+    )?.get("Access-Control-Allow-Methods") ?? "",
+    /PATCH/,
+  );
   assert.equal(
     mobileCorsHeaders(
       new Request("https://example.test", {
