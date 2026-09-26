@@ -9,9 +9,15 @@ import {
   completePasswordRecovery,
   dismissPasswordRecovery,
   issuePasswordRecoveryLink,
+  recordPasswordRecoveryDelivery,
   RecoveryError,
   requestPasswordRecovery,
 } from "@/lib/recovery";
+import {
+  recoveryEmailSender,
+  RecoveryEmailDeliveryError,
+} from "@/lib/recovery-email";
+import { isDemoMode } from "@/lib/runtime";
 
 export type RecoveryState = {
   error?: string;
@@ -32,17 +38,53 @@ export async function requestRecoveryAction(
   _state: RecoveryState,
   form: FormData,
 ): Promise<RecoveryState> {
+  const db = await database();
+  let sender = null;
+  if (!isDemoMode()) {
+    try {
+      sender = recoveryEmailSender();
+    } catch {
+      // A valid public request still enters the private support queue when
+      // production email configuration is incomplete.
+    }
+  }
   try {
-    await requestPasswordRecovery(
-      await database(),
+    const prepared = await requestPasswordRecovery(
+      db,
       String(form.get("email") ?? ""),
+      sender ? "email" : "manual",
     );
+    if (prepared && sender) {
+      try {
+        const delivered = await sender.send(prepared);
+        await recordPasswordRecoveryDelivery(db, prepared.requestId, {
+          status: "provider_accepted",
+          provider: delivered.provider,
+          messageId: delivered.messageId,
+        });
+      } catch (error) {
+        try {
+          await recordPasswordRecoveryDelivery(db, prepared.requestId, {
+            status: "failed",
+            provider: "resend",
+            errorCode:
+              error instanceof RecoveryEmailDeliveryError
+                ? error.code
+                : "unexpected_delivery_error",
+          });
+        } catch {
+          // Delivery bookkeeping must never make the public response reveal
+          // whether the submitted address belongs to an account.
+        }
+      }
+    }
   } catch (error) {
     return errorState(error);
   }
   return {
-    success:
-      "If that account exists, the request is ready for platform support. Contact them through your usual private channel.",
+    success: sender
+      ? "If that account exists, check its inbox for a password-reset email. If it does not arrive, contact platform support."
+      : "If that account exists, the request is ready for platform support. Contact them through your usual private channel.",
   };
 }
 

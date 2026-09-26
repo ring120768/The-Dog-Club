@@ -5,6 +5,7 @@ import { database } from "@/lib/database";
 import { isPlatformOwner } from "@/lib/branding";
 import { logoutAction } from "@/app/actions";
 import { DemoLogo } from "@/components/demo-logo";
+import { isDemoMode } from "@/lib/runtime";
 export default async function PlatformLayout({
   children,
 }: {
@@ -24,7 +25,7 @@ export default async function PlatformLayout({
           </span>
         </Link>
         <div className="platform-header-actions">
-          <span className="badge">LOCAL DEMO</span>
+          {isDemoMode() && <span className="badge">LOCAL DEMO</span>}
           <form action={logoutAction}>
             <button className="text-button">Sign out</button>
           </form>

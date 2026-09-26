@@ -5,6 +5,8 @@ import { isPlatformOwner } from "@/lib/branding";
 import { database } from "@/lib/database";
 import { recoveryRequestsForPlatform } from "@/lib/recovery";
 import { RecoverySupportControls } from "@/components/recovery-forms";
+import { recoveryEmailConfigurationStatus } from "@/lib/recovery-email";
+import { isDemoMode } from "@/lib/runtime";
 
 const displayDate = (value: string) =>
   new Intl.DateTimeFormat("en-GB", {
@@ -18,6 +20,9 @@ export default async function PlatformRecoveryPage() {
   const db = await database();
   if (!(await isPlatformOwner(db, account.id))) notFound();
   const requests = await recoveryRequestsForPlatform(db, account.id);
+  const emailStatus = isDemoMode()
+    ? "disabled"
+    : recoveryEmailConfigurationStatus();
   return (
     <main className="platform-main">
       <Link className="inline-link" href="/platform">
@@ -28,9 +33,16 @@ export default async function PlatformRecoveryPage() {
           <span className="eyebrow">ACCOUNT RECOVERY</span>
           <h1>Private support queue.</h1>
           <p>
-            Verify the requester through your agreed support process before
-            sharing a one-time link. Never send it in a public channel.
+            {emailStatus === "configured"
+              ? "Configured requests are sent to the account’s stored email. Provider acceptance is recorded here; it is not proof that the message reached the inbox."
+              : "Verify the requester through your agreed support process before sharing a one-time link. Never send it in a public channel."}
           </p>
+          {emailStatus === "invalid" && (
+            <p className="error" role="alert">
+              Recovery email configuration is invalid. Requests will remain in
+              the manual support queue until it is corrected.
+            </p>
+          )}
         </div>
       </div>
       <div className="operator-grid">
@@ -52,10 +64,16 @@ export default async function PlatformRecoveryPage() {
                     : dismissed
                       ? "Request dismissed"
                       : expired
-                        ? "Link expired — a new one can be issued"
-                        : request.handled_at
-                          ? "Recovery link issued"
-                          : "Awaiting verification"}
+                        ? "Recovery link expired — a new one can be issued"
+                        : request.delivery_status === "provider_accepted"
+                          ? `Email accepted by ${request.delivery_provider ?? "provider"}`
+                          : request.delivery_status === "failed"
+                            ? "Email failed — manual support required"
+                            : request.delivery_status === "pending"
+                              ? "Email delivery pending"
+                              : request.handled_at
+                                ? "Manual recovery link issued"
+                                : "Awaiting verification"}
                 </small>
               </div>
               {!closed && <RecoverySupportControls requestId={request.id} />}

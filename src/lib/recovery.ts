@@ -30,11 +30,28 @@ export type RecoveryRequest = {
   expires_at: string | null;
   consumed_at: string | null;
   dismissed_at: string | null;
+  delivery_status:
+    "manual_required" | "pending" | "provider_accepted" | "failed";
+  delivery_provider: string | null;
+  delivery_message_id: string | null;
+  delivery_attempted_at: string | null;
+  delivery_error_code: string | null;
 };
 
-export async function requestPasswordRecovery(db: Db, email: unknown) {
+export type PreparedRecoveryDelivery = {
+  requestId: string;
+  email: string;
+  token: string;
+};
+
+export async function requestPasswordRecovery(
+  db: Db,
+  email: unknown,
+  delivery: "manual" | "email" = "manual",
+): Promise<PreparedRecoveryDelivery | null> {
   const normalised = emailInput.parse(email);
-  await db.transaction(async (tx) => {
+  const token = randomBytes(32).toString("hex");
+  return db.transaction(async (tx) => {
     const account = (
       await tx.query<{ id: string }>(
         "SELECT id FROM accounts WHERE email=$1 FOR UPDATE",
@@ -42,23 +59,46 @@ export async function requestPasswordRecovery(db: Db, email: unknown) {
       )
     ).rows[0];
     // The public response is deliberately identical when no account exists.
-    if (!account) return;
+    if (!account) return null;
     const recent = await tx.query<{ count: number }>(
       `SELECT count(*)::int AS count FROM password_recovery_requests
        WHERE account_id=$1 AND requested_at>now()-interval '1 hour'`,
       [account.id],
     );
-    if (recent.rows[0].count >= 3) return;
+    if (recent.rows[0].count >= 3) return null;
     const id = randomUUID();
-    await tx.query(
-      "INSERT INTO password_recovery_requests(id,account_id) VALUES($1,$2)",
-      [id, account.id],
-    );
+    if (delivery === "email") {
+      await tx.query(
+        `UPDATE password_recovery_requests SET expires_at=now()
+         WHERE account_id=$1 AND token_hash IS NOT NULL AND consumed_at IS NULL`,
+        [account.id],
+      );
+      await tx.query(
+        `INSERT INTO password_recovery_requests(
+          id,account_id,token_hash,expires_at,handled_at,delivery_status
+         ) VALUES($1,$2,$3,now()+interval '30 minutes',now(),'pending')`,
+        [id, account.id, digest(token)],
+      );
+    } else {
+      await tx.query(
+        "INSERT INTO password_recovery_requests(id,account_id) VALUES($1,$2)",
+        [id, account.id],
+      );
+    }
     await tx.query(
       `INSERT INTO password_recovery_events(request_id,account_id,action)
        VALUES($1,$2,'recovery.requested')`,
       [id, account.id],
     );
+    if (delivery === "email") {
+      await tx.query(
+        `INSERT INTO password_recovery_events(request_id,account_id,action)
+         VALUES($1,$2,'recovery.link_issued'),($1,$2,'recovery.delivery_queued')`,
+        [id, account.id],
+      );
+      return { requestId: id, email: normalised, token };
+    }
+    return null;
   });
 }
 
@@ -67,7 +107,8 @@ export async function recoveryRequestsForPlatform(db: Db, actor: string) {
     await requirePlatformOwner(tx, actor);
     return (
       await tx.query<RecoveryRequest>(
-        `SELECT r.id,a.email,r.requested_at,r.handled_at,r.expires_at,r.consumed_at,r.dismissed_at
+        `SELECT r.id,a.email,r.requested_at,r.handled_at,r.expires_at,r.consumed_at,r.dismissed_at,
+          r.delivery_status,r.delivery_provider,r.delivery_message_id,r.delivery_attempted_at,r.delivery_error_code
          FROM password_recovery_requests r JOIN accounts a ON a.id=r.account_id
          ORDER BY r.requested_at DESC LIMIT 100`,
       )
@@ -100,7 +141,9 @@ export async function issuePasswordRecoveryLink(
     );
     await tx.query(
       `UPDATE password_recovery_requests
-       SET token_hash=$1,expires_at=now()+interval '30 minutes',handled_at=now(),handled_by=$2
+       SET token_hash=$1,expires_at=now()+interval '30 minutes',handled_at=now(),handled_by=$2,
+       delivery_status='manual_required',delivery_provider=NULL,delivery_message_id=NULL,
+       delivery_attempted_at=NULL,delivery_error_code=NULL
        WHERE id=$3`,
       [digest(token), actor, request.id],
     );
@@ -110,6 +153,58 @@ export async function issuePasswordRecoveryLink(
       [request.id, request.account_id, actor],
     );
     return token;
+  });
+}
+
+export async function recordPasswordRecoveryDelivery(
+  db: Db,
+  requestId: string,
+  result:
+    | { status: "provider_accepted"; provider: string; messageId: string }
+    | { status: "failed"; provider: string; errorCode: string },
+) {
+  z.uuid().parse(requestId);
+  const provider = z.string().trim().min(1).max(40).parse(result.provider);
+  const messageId =
+    result.status === "provider_accepted"
+      ? z.string().trim().min(1).max(200).parse(result.messageId)
+      : null;
+  const errorCode =
+    result.status === "failed"
+      ? z
+          .string()
+          .trim()
+          .regex(/^[a-z0-9_-]+$/)
+          .max(80)
+          .parse(result.errorCode)
+      : null;
+  await db.transaction(async (tx) => {
+    const request = (
+      await tx.query<{ account_id: string; delivery_status: string }>(
+        `SELECT account_id,delivery_status FROM password_recovery_requests
+         WHERE id=$1 FOR UPDATE`,
+        [requestId],
+      )
+    ).rows[0];
+    if (!request || request.delivery_status !== "pending")
+      throw new RecoveryError("Recovery delivery is unavailable.");
+    await tx.query(
+      `UPDATE password_recovery_requests SET delivery_status=$1,delivery_provider=$2,
+       delivery_message_id=$3,delivery_attempted_at=now(),delivery_error_code=$4
+       WHERE id=$5`,
+      [result.status, provider, messageId, errorCode, requestId],
+    );
+    await tx.query(
+      `INSERT INTO password_recovery_events(request_id,account_id,action)
+       VALUES($1,$2,$3)`,
+      [
+        requestId,
+        request.account_id,
+        result.status === "provider_accepted"
+          ? "recovery.delivery_accepted"
+          : "recovery.delivery_failed",
+      ],
+    );
   });
 }
 

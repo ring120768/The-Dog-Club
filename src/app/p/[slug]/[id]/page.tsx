@@ -4,6 +4,7 @@ import { ClubMark } from "@/components/club-mark";
 import { database } from "@/lib/database";
 import { publicDog, type Club } from "@/lib/dogs";
 import { DogAvatar } from "@/components/dog-avatar";
+import { isDemoMode } from "@/lib/runtime";
 export const dynamic = "force-dynamic";
 export default async function PublicProfile({
   params,
@@ -24,10 +25,10 @@ export default async function PublicProfile({
       style={{ "--brand": club.colour } as React.CSSProperties}
     >
       <div className="wordmark">
-        <ClubMark emblem={club.emblem}/>
+        <ClubMark emblem={club.emblem} />
         {club.name}
       </div>
-      <span className="badge">FICTIONAL DEMO PROFILE</span>
+      {isDemoMode() && <span className="badge">FICTIONAL DEMO PROFILE</span>}
       <DogAvatar
         large
         colour={dog.avatar}

@@ -114,7 +114,7 @@ export function RecoverySupportControls({ requestId }: { requestId: string }) {
           </label>
         )}
         <button className="button" disabled={pending}>
-          {pending ? "Creating…" : "Create one-time link"}
+          {pending ? "Creating…" : "Create manual one-time link"}
         </button>
       </form>
       <form action={dismissRecoveryAction.bind(null, requestId)}>

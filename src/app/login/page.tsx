@@ -3,6 +3,7 @@ import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { loginAction } from "../actions";
 import { DogAvatar } from "@/components/dog-avatar";
+import { isDemoMode } from "@/lib/runtime";
 export const dynamic = "force-dynamic";
 export default async function Login({
   searchParams,
@@ -10,6 +11,7 @@ export default async function Login({
   searchParams: Promise<{ error?: string; recovered?: string }>;
 }) {
   const { error, recovered } = await searchParams;
+  const demo = isDemoMode();
   return (
     <main className="login-page">
       <section className="login-story">
@@ -33,7 +35,7 @@ export default async function Login({
         </div>
       </section>
       <section className="login-panel">
-        <span className="badge">LOCAL DEMO · FICTIONAL CLUBS</span>
+        {demo && <span className="badge">LOCAL DEMO · FICTIONAL CLUBS</span>}
         <h2>Welcome to the pack.</h2>
         <p>Sign in to make yourself at home.</p>
         {recovered && (
@@ -49,7 +51,7 @@ export default async function Login({
               type="email"
               autoComplete="username"
               required
-              defaultValue="alice@demo.invalid"
+              defaultValue={demo ? "alice@demo.invalid" : undefined}
             />
           </label>
           <label>
@@ -59,7 +61,7 @@ export default async function Login({
               type="password"
               autoComplete="current-password"
               required
-              defaultValue="PawsTogether!26"
+              defaultValue={demo ? "PawsTogether!26" : undefined}
             />
           </label>
           {error && (
@@ -75,25 +77,27 @@ export default async function Login({
         <Link className="inline-link" href="/recover">
           Forgotten your password?
         </Link>
-        <details className="demo-accounts">
-          <summary>Explore the demo accounts</summary>
-          <p>
-            Shared demo password: <code>PawsTogether!26</code>
-          </p>
-          <dl>
-            <dt>Platform owner</dt>
-            <dd>owner@demo.invalid</dd>
-            <dt>Willow member</dt>
-            <dd>alice@demo.invalid</dd>
-            <dt>Another Willow member</dt>
-            <dd>bea@demo.invalid</dd>
-            <dt>Willow manager</dt>
-            <dd>manager@demo.invalid</dd>
-            <dt>Coast & Canine member</dt>
-            <dd>coast@demo.invalid</dd>
-          </dl>
-          <p>Synthetic records only. No payments or messages are sent.</p>
-        </details>
+        {demo && (
+          <details className="demo-accounts">
+            <summary>Explore the demo accounts</summary>
+            <p>
+              Shared demo password: <code>PawsTogether!26</code>
+            </p>
+            <dl>
+              <dt>Platform owner</dt>
+              <dd>owner@demo.invalid</dd>
+              <dt>Willow member</dt>
+              <dd>alice@demo.invalid</dd>
+              <dt>Another Willow member</dt>
+              <dd>bea@demo.invalid</dd>
+              <dt>Willow manager</dt>
+              <dd>manager@demo.invalid</dd>
+              <dt>Coast & Canine member</dt>
+              <dd>coast@demo.invalid</dd>
+            </dl>
+            <p>Synthetic records only. No payments or messages are sent.</p>
+          </details>
+        )}
       </section>
     </main>
   );
