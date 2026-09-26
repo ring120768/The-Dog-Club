@@ -56,7 +56,7 @@ async function requireEligibleDog(
   dog: string,
 ) {
   const eligible = await tx.query<{ owner_id: string }>(
-    `SELECT d.owner_id FROM dogs d
+    `SELECT d.owner_id FROM dogs d JOIN clubs c ON c.id=d.club_id AND c.operator_state<>'closed'
      JOIN memberships m ON m.club_id=d.club_id AND m.account_id=d.owner_id
      JOIN dog_applications a ON a.club_id=d.club_id AND a.dog_id=d.id AND a.activity='grooming' AND a.status='approved'
      WHERE d.club_id=$1 AND d.id=$2 AND (d.owner_id=$3 OR EXISTS(

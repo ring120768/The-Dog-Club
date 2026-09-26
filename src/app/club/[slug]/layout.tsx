@@ -123,6 +123,11 @@ export default async function ClubLayout({
             </span>
           </span>
           {isDemoMode() && <span className="badge">SYNTHETIC DEMO</span>}
+          {club.operator_state === "restricted" && (
+            <span className="badge lifecycle-warning">
+              RESTRICTED · EXISTING SERVICES CONTINUE
+            </span>
+          )}
         </header>
         {children}
         <footer className="workspace-footer">

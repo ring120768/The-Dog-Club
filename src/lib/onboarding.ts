@@ -15,6 +15,22 @@ async function authorised(
   kind: string,
   club: string | null,
 ) {
+  if (club) {
+    const operator = (
+      await tx.query<{ operator_state: string }>(
+        "SELECT operator_state FROM clubs WHERE id=$1",
+        [club],
+      )
+    ).rows[0];
+    if (!operator || ["restricted", "closed"].includes(operator.operator_state))
+      throw new OnboardingError(
+        "New invitations are unavailable while this operator is restricted or closed.",
+      );
+    if (kind === "member" && operator.operator_state === "onboarding")
+      throw new OnboardingError(
+        "Member invitations become available when the operator enters trial or active service.",
+      );
+  }
   if (kind === "staff") {
     const access = await tx.query(
       `SELECT 1 FROM memberships m LEFT JOIN staff_members s ON s.club_id=m.club_id AND s.account_id=m.account_id

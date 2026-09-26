@@ -89,7 +89,7 @@ export async function rollbackOnlyDb(connectionString: string): Promise<Db> {
 export async function seed(db: Db) {
   await db.transaction(async (tx) => {
     await tx.exec(
-      `INSERT INTO clubs(id,slug,name,tagline,colour,location,avatar_tone,emblem) VALUES ('willow','willow','The Willow Club','Good company. Happy dogs.','#235448','Chiswick, London','sand','paw'),('coast','coast','Coast & Canine','A little sea air. A lot of tail wags.','#2e526a','Brighton, Sussex','sage','sparkles');`,
+      `INSERT INTO clubs(id,slug,name,tagline,colour,location,avatar_tone,emblem,operator_state) VALUES ('willow','willow','The Willow Club','Good company. Happy dogs.','#235448','Chiswick, London','sand','paw','trial'),('coast','coast','Coast & Canine','A little sea air. A lot of tail wags.','#2e526a','Brighton, Sussex','sage','sparkles','trial');`,
     );
     for (const [id, email] of [
       ["alice", "alice@demo.invalid"],
@@ -161,6 +161,31 @@ export async function scoped<T>(
   work: (tx: Queryable) => Promise<T>,
 ) {
   return db.transaction(async (tx) => {
+    if (clubId && !publicOnly) {
+      const access = (
+        await tx.query<{
+          operator_state: string;
+          manager: boolean;
+          staff: boolean;
+        }>(
+          `SELECT c.operator_state,
+            EXISTS(SELECT 1 FROM memberships m WHERE m.club_id=c.id AND m.account_id=$2 AND m.role='manager') AS manager,
+            EXISTS(SELECT 1 FROM staff_members s WHERE s.club_id=c.id AND s.account_id=$2 AND s.active) AS staff
+           FROM clubs c WHERE c.id=$1`,
+          [clubId, accountId],
+        )
+      ).rows[0];
+      if (
+        !access ||
+        access.operator_state === "closed" ||
+        (access.operator_state === "onboarding" &&
+          !access.manager &&
+          !access.staff)
+      )
+        throw new Error(
+          "Club access is unavailable in its current lifecycle state.",
+        );
+    }
     await tx.query(
       "SELECT set_config('app.account_id',$1,true), set_config('app.club_id',$2,true), set_config('app.public',$3,true)",
       [accountId, clubId, String(publicOnly)],

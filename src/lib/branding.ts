@@ -7,10 +7,10 @@ export class ClubConfigurationError extends Error {}
 export async function isPlatformOwner(db: Db,account:string) {return scoped(db,account,"",false,async tx=>(await tx.query("SELECT account_id FROM platform_owners")).rows.length===1);}
 export async function platformClubs(db: Db,account:string) {
  if(!await isPlatformOwner(db,account)) throw new ClubConfigurationError("Platform access is required.");
- return scoped(db,account,"",false,async tx=>(await tx.query<Club>("SELECT id,slug,name,tagline,colour,location,emblem,avatar_tone,version FROM clubs ORDER BY name")).rows);
+ return scoped(db,account,"",false,async tx=>(await tx.query<Club>("SELECT id,slug,name,tagline,colour,location,emblem,avatar_tone,version,operator_state FROM clubs ORDER BY name")).rows);
 }
 export async function editableClub(db: Db,account:string,slug:string) {
- return scoped(db,account,"",false,async tx=>(await tx.query<Club>(`SELECT id,slug,name,tagline,colour,location,emblem,avatar_tone,version FROM clubs c WHERE slug=$1 AND (EXISTS(SELECT 1 FROM platform_owners) OR EXISTS(SELECT 1 FROM memberships m WHERE m.club_id=c.id AND m.role='manager'))`,[slug])).rows[0]??null);
+ return scoped(db,account,"",false,async tx=>(await tx.query<Club>(`SELECT id,slug,name,tagline,colour,location,emblem,avatar_tone,version,operator_state FROM clubs c WHERE slug=$1 AND (EXISTS(SELECT 1 FROM platform_owners) OR EXISTS(SELECT 1 FROM memberships m WHERE m.club_id=c.id AND m.role='manager'))`,[slug])).rows[0]??null);
 }
 export async function createClub(db: Db,account:string,input:unknown) {
  if(!await isPlatformOwner(db,account)) throw new ClubConfigurationError("Platform access is required.");

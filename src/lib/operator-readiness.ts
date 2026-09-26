@@ -1,4 +1,4 @@
-import type { Db } from "./database";
+import type { Db, Queryable } from "./database";
 import { isPlatformOwner } from "./branding";
 import { OnboardingError } from "./onboarding";
 
@@ -93,13 +93,7 @@ function result(row: ReadinessRow): OperatorReadiness {
   };
 }
 
-export async function operatorReadinessForPlatform(
-  db: Db,
-  actor: string,
-  clubIds?: string[],
-) {
-  if (!(await isPlatformOwner(db, actor)))
-    throw new OnboardingError("Platform access is required.");
+export async function readinessForClubs(db: Queryable, clubIds?: string[]) {
   if (clubIds && clubIds.length === 0) return [];
 
   // This query deliberately returns configuration counts only. The platform
@@ -128,4 +122,14 @@ export async function operatorReadinessForPlatform(
     [clubIds ?? null],
   );
   return rows.rows.map(result);
+}
+
+export async function operatorReadinessForPlatform(
+  db: Db,
+  actor: string,
+  clubIds?: string[],
+) {
+  if (!(await isPlatformOwner(db, actor)))
+    throw new OnboardingError("Platform access is required.");
+  return readinessForClubs(db, clubIds);
 }

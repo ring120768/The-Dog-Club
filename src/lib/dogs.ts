@@ -12,6 +12,7 @@ export type Club = {
   emblem: "paw" | "dog" | "heart" | "sparkles";
   avatar_tone: "sand" | "sage" | "rose";
   version: number;
+  operator_state: "onboarding" | "trial" | "active" | "restricted" | "closed";
   role?: string;
   staff_role?: string | null;
   can_manage_staff?: boolean;
@@ -50,7 +51,9 @@ export async function clubsFor(db: Db, account: string) {
            COALESCE(s.active AND s.can_manage_staff,false) AS can_manage_staff,
            COALESCE(s.active AND s.can_manage_booking_setup,false) AS can_manage_booking_setup
            FROM clubs c JOIN memberships m ON c.id=m.club_id
-           LEFT JOIN staff_members s ON s.club_id=m.club_id AND s.account_id=m.account_id ORDER BY c.name`,
+           LEFT JOIN staff_members s ON s.club_id=m.club_id AND s.account_id=m.account_id
+           WHERE c.operator_state<>'closed' AND (c.operator_state<>'onboarding' OR m.role='manager' OR s.active)
+           ORDER BY c.name`,
         )
       ).rows,
   );
@@ -131,7 +134,9 @@ export async function publicDog(db: Db, club: string, id: string) {
         await tx.query<
           Pick<Dog, "name" | "breed" | "bio" | "avatar" | "photo_id">
         >(
-          "SELECT d.name,d.breed,d.bio,d.avatar,p.id AS photo_id FROM dogs d LEFT JOIN dog_photos p ON p.club_id=d.club_id AND p.dog_id=d.id WHERE d.id=$1",
+          `SELECT d.name,d.breed,d.bio,d.avatar,p.id AS photo_id FROM dogs d
+           JOIN clubs c ON c.id=d.club_id AND c.operator_state<>'closed'
+           LEFT JOIN dog_photos p ON p.club_id=d.club_id AND p.dog_id=d.id WHERE d.id=$1`,
           [id],
         )
       ).rows[0] ?? null,

@@ -37,3 +37,9 @@ Direct HTTP checks without a session: public photo returned 200 image/webp with 
 TypeScript and all 91 tests pass. The readiness acceptance test uses the public service layer to issue and accept two operator invitations with different names, colours, emblems, locations and managers. Each manager configures a distinct priced grooming service, station and qualified published shift. The platform-only summary reports both at 5/5 without returning member, dog, care, booking or payroll records; an ordinary tenant member is denied access.
 
 Local browser acceptance confirms the operator list distinguishes the intentionally incomplete Coast tenant (1/5) from Willow and Pavilion Pooch (Demo ready). Willow’s detail view renders the five named checks and the boundary note separating synthetic demo readiness from payment connection, production approval and mobile release. Production schema, data and services remain untouched.
+
+# Operator lifecycle verification — 26/09/2026
+
+TypeScript and all 95 tests pass. Lifecycle tests prove that onboarding admits managers for setup while blocking members; trial requires 5/5 readiness; activation additionally requires explicit external-review confirmation; restricted operators retain existing access and records while new invitations fail; and closure removes tenant and public-profile access without deleting membership records. Closed operators cannot be silently reopened. State events retain actor, reason and readiness snapshot.
+
+Local browser acceptance confirms Willow renders as Trial with the permitted transition form and Coast cannot be activated while its readiness score is 1/5. The failed activation leaves Coast in Trial and displays the readiness error. Production schema, data and services remain untouched.
