@@ -16,9 +16,14 @@ export default async function PlatformHome() {
           <h1>Room for another pack.</h1>
           <p>Set up operators and give each club its own identity.</p>
         </div>
-        <Link className="button" href="/platform/invitations">
-          Invite an operator +
-        </Link>
+        <div className="platform-actions">
+          <Link className="inline-link" href="/platform/recovery">
+            Recovery requests
+          </Link>
+          <Link className="button" href="/platform/invitations">
+            Invite an operator +
+          </Link>
+        </div>
       </div>
       <div className="operator-grid">
         {clubs.map((club) => (
