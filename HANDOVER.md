@@ -2,6 +2,10 @@
 
 Updated 26/09/2026
 
+## Commercial pricing proposal — 26/09/2026
+
+`docs/COMMERCIAL_PRICING.md` records the initial UK sales hypothesis: £349 per location/month plus £2,500 onboarding, and a limited Founding Partner offer of £1,500 onboarding plus £249/month for the first 12 months. Managed operator-branded iOS/Android apps, additional locations, dedicated infrastructure, usage charges and bespoke work are separate. The proposal is not an approved quote; it includes market evidence and explicit validation gates before public pricing.
+
 ## Database hosting architecture decision — 26/09/2026
 
 The commercial white-label hosting rule is now explicit in `docs/ARCHITECTURE_DATABASE_HOSTING.md`. Supabase PostgreSQL is the shared multi-tenant production platform by default; operator separation is enforced through tenant relationships, server-side authorisation and row-level security. Neon remains synthetic Preview/mobile staging only. Dedicated managed PostgreSQL deployments are separately contracted enterprise exceptions using the same migrations and application contracts, with their own credentials and operations.

@@ -81,7 +81,9 @@ Sources checked 25/09/2026: [Apple review guidelines](https://developer.apple.co
 
 ## Commercial packaging proposal
 
-Sell a monthly software subscription per operating business/location, with an onboarding fee for configuration/import/training. Optional paid modules can include workforce/payroll, additional supported integrations and managed branded mobile releases. These are packaging hypotheses; no prices have been approved.
+The dated [commercial pricing proposal](COMMERCIAL_PRICING.md) sets an initial UK sales anchor of £349 per location/month plus £2,500 onboarding, with a limited Founding Partner offer and separately priced managed native apps, dedicated infrastructure and bespoke work. These remain validation hypotheses rather than an approved customer quotation.
+
+Sell a monthly software subscription per operating business/location, with an onboarding fee for configuration/import/training. Optional paid modules can include workforce/payroll, additional supported integrations and managed branded mobile releases.
 
 Keep provider charges, payment processing, SMS, hardware and app-store account costs visible. Define usage allowances and support terms before quoting. Do not introduce a transaction commission until merchants understand it and the commercial/payment model supports it.
 
