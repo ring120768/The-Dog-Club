@@ -96,9 +96,9 @@ Review draft GA01, GA02, A15 and A22 with operator/designer. Confirm wash/dry se
 
 ## Current status
 
-Completed: competitor research, four-page drawing review, detailed feature PRD, white-label product specification, gated build backlog and the local application checkpoints recorded below. The shared mobile client now reaches grooming booking confirmation, transactional rescheduling and cancellation in development. No live service payment, payroll submission, mobile-store release or production booking migration has been completed.
+Completed: competitor research, four-page drawing review, detailed feature PRD, white-label product specification, gated build backlog and the local application checkpoints recorded below. The shared mobile client reaches grooming booking confirmation, transactional rescheduling and cancellation in development. The web member directory now supports dog-name search, profile/photo reports and account-level blocks; managers have a tenant-scoped review, hide/restore and audit queue. No live service payment, payroll submission, mobile-store release or production booking/community migration has been completed.
 
-Next execution milestone: implement the approved hosted-Checkout service-payment lifecycle in [SERVICE_PAYMENTS.md](SERVICE_PAYMENTS.md), then finish iOS and Android booking/payment acceptance against reviewed HTTPS non-production infrastructure. Project location is `/Users/ianring/Documents/ChatGPT/The Dog club`, connected to `ring120768/The-Dog-Club`.
+Next execution milestone: rehearse the community-safety migration against non-production PostgreSQL, add the member community controls to the shared native client, then complete iOS and Android interactive acceptance against the reviewed HTTPS staging deployment. Project location is `/Users/ianring/Documents/ChatGPT/The Dog club`, connected to `ring120768/The-Dog-Club`.
 
 
 ## Implementation checkpoint — 25/09/2026

@@ -6,6 +6,7 @@ import {
   CreditCard,
   Dog,
   DoorOpen,
+  Flag,
   House,
   LogOut,
   Settings2,
@@ -72,6 +73,12 @@ export default async function ClubLayout({
                 <Link href={`/club/${slug}/operations`}>
                   <ShieldCheck size={19} />
                   Manager overview
+                </Link>
+              )}
+              {club.role === "manager" && (
+                <Link href={`/club/${slug}/moderation`}>
+                  <Flag size={19} />
+                  Community moderation
                 </Link>
               )}
               {(club.role === "manager" || club.can_manage_booking_setup) && (

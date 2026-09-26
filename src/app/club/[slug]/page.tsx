@@ -5,13 +5,19 @@ import { Plus, ArrowUpRight, LockKeyhole, Users, Globe } from "lucide-react";
 import { requireAccount } from "@/lib/auth";
 import { database } from "@/lib/database";
 import { clubsFor, dogsFor } from "@/lib/dogs";
+import { blockedCommunityAccounts, searchCommunityDogs } from "@/lib/community";
+import {
+  blockCommunityAction,
+  reportCommunityAction,
+  unblockCommunityAction,
+} from "@/app/community-actions";
 import { DogAvatar } from "@/components/dog-avatar";
 export default async function ClubPage({
   params,
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ saved?: string }>;
+  searchParams: Promise<{ saved?: string; q?: string; community?: string }>;
 }) {
   const { slug } = await params;
   const account = await requireAccount();
@@ -20,10 +26,15 @@ export default async function ClubPage({
   if (!club) notFound();
   const dogs = await dogsFor(db, account.id, club.id);
   const mine = dogs.filter((d) => d.can_manage || d.can_book);
-  const community = dogs.filter(
+  const communityDogs = dogs.filter(
     (d) => !d.can_manage && !d.can_book && d.audience !== "private",
   );
-  const { saved } = await searchParams;
+  const blocked = await blockedCommunityAccounts(db, account.id, club.id);
+  const { saved, q = "", community: communityMessage } = await searchParams;
+  const community = searchCommunityDogs(communityDogs, q);
+  const reportAction = reportCommunityAction.bind(null, slug);
+  const blockAction = blockCommunityAction.bind(null, slug);
+  const unblockAction = unblockCommunityAction.bind(null, slug);
   return (
     <main className="club-main">
       {saved && (
@@ -135,13 +146,69 @@ export default async function ClubPage({
           </div>
         )}
       </div>
-      <section className="community">
+      <section className="community" id="community">
         <div>
           <span className="eyebrow">FAMILIAR SNIFFS</span>
           <h2>Meet the neighbours.</h2>
           <p>
             Dog-first introductions, with their humans’ details kept private.
           </p>
+          <form className="community-search" method="get">
+            <label htmlFor="community-dog-search">Search by dog name</label>
+            <div>
+              <input
+                id="community-dog-search"
+                name="q"
+                defaultValue={q}
+                maxLength={60}
+                placeholder="Try Mabel"
+              />
+              <button className="button" type="submit">
+                Search
+              </button>
+            </div>
+          </form>
+          {q && (
+            <p className="community-result-count">
+              {community.length} {community.length === 1 ? "dog" : "dogs"} found
+              {" · "}
+              <Link href={`/club/${slug}#community`}>Clear search</Link>
+            </p>
+          )}
+          {communityMessage && (
+            <p
+              className={
+                communityMessage.includes("error") ? "error" : "success"
+              }
+              role="status"
+            >
+              {communityMessage === "reported"
+                ? "Thanks. The club team can now review your report."
+                : communityMessage === "blocked"
+                  ? "That household is hidden from your member directory."
+                  : communityMessage === "unblocked"
+                    ? "The household is visible in your member directory again."
+                    : "That change could not be saved. Please try again."}
+            </p>
+          )}
+          {blocked.length > 0 && (
+            <details className="blocked-households">
+              <summary>Blocked households ({blocked.length})</summary>
+              {blocked.map((item) => (
+                <form action={unblockAction} key={item.blocked_account_id}>
+                  <input
+                    type="hidden"
+                    name="accountId"
+                    value={item.blocked_account_id}
+                  />
+                  <span>{item.display_label}</span>
+                  <button className="text-button" type="submit">
+                    Unblock
+                  </button>
+                </form>
+              ))}
+            </details>
+          )}
         </div>
         <div className="neighbours">
           {community.map((dog) => (
@@ -157,10 +224,58 @@ export default async function ClubPage({
               />
               <h3>{dog.name}</h3>
               <p>{dog.bio}</p>
+              <details className="community-safety">
+                <summary>Safety &amp; privacy</summary>
+                <form action={reportAction}>
+                  <input type="hidden" name="dogId" value={dog.id} />
+                  <label>
+                    Report
+                    <select name="target" defaultValue="profile">
+                      <option value="profile">Profile</option>
+                      {dog.photo_id && (
+                        <option value="photo">Current photo</option>
+                      )}
+                    </select>
+                  </label>
+                  <label>
+                    Reason
+                    <select name="reason" defaultValue="privacy">
+                      <option value="privacy">Privacy concern</option>
+                      <option value="unsafe_photo">Unsafe photo</option>
+                      <option value="harassment">Harassment</option>
+                      <option value="false_information">
+                        False information
+                      </option>
+                      <option value="other">Other</option>
+                    </select>
+                  </label>
+                  <label>
+                    Details (optional)
+                    <textarea name="details" maxLength={1000} rows={3} />
+                  </label>
+                  <button className="text-button" type="submit">
+                    Send report
+                  </button>
+                </form>
+                <form action={blockAction}>
+                  <input type="hidden" name="dogId" value={dog.id} />
+                  <button className="text-button danger-text" type="submit">
+                    Block this household
+                  </button>
+                  <small>
+                    This hides both households in the member directory. Public
+                    profile links can still be opened anonymously.
+                  </small>
+                </form>
+              </details>
             </article>
           ))}
           {community.length === 0 && (
-            <p>Your club’s shared profiles will appear here.</p>
+            <p>
+              {q
+                ? `No shared dog profiles match “${q.slice(0, 60)}”.`
+                : "Your club’s shared profiles will appear here."}
+            </p>
           )}
         </div>
       </section>
