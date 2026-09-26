@@ -103,7 +103,7 @@ Next execution milestone: independent project foundation, tenant isolation, bran
 
 ## Implementation checkpoint — 25/09/2026
 
-The local web foundation now includes secure operator/member/staff invitations, tenant-scoped venue/resource setup, configurable branding and a computed operator demo-readiness checklist. Automated acceptance provisions two distinct synthetic operators and configures each without SQL or a code fork. Stage 1 remains in progress because production identity/datastore rehearsal, operator lifecycle enforcement and deployment controls are outstanding. Stage 2 has a working web dog-profile and controlled-photo slice; iOS/Android clients are not implemented.
+The local web foundation now includes secure operator/member/staff invitations, tenant-scoped venue/resource setup, configurable branding and a computed operator demo-readiness checklist. Automated acceptance provisions two distinct synthetic operators and configures each without SQL or a code fork. Stage 1 remains in progress because production identity/datastore rehearsal, operator lifecycle enforcement and deployment controls are outstanding. Stage 2 has working web dog profiles and controlled photos plus a shared iOS/Android foundation for sign-in, club selection, dog profile/photo editing and read-only membership/upcoming-booking summaries. Store-ready mobile booking, payments, persisted secure sessions and distribution remain outstanding.
 
 
 ### Photo increment — 25/09/2026
