@@ -10,6 +10,8 @@ import {
 } from "@/lib/bookings";
 import { OnboardingError } from "@/lib/onboarding";
 import { BookingSlotForm, CancelBookingForm } from "@/components/booking-forms";
+import { visitsFor } from "@/lib/visits";
+import { visitLabels } from "@/lib/visit-contract";
 
 const londonDate = () => {
   const parts = new Intl.DateTimeFormat("en-GB", {
@@ -56,6 +58,7 @@ export default async function BookingsPage({
   );
   const services = await activeServices(db, account.id, club.id);
   const bookings = await bookingsFor(db, account.id, club.id);
+  const visitData = await visitsFor(db, account.id, club.id);
   const query = await searchParams;
   const selectedDog = dogs.find((dog) => dog.id === query.dog);
   const selectedService = services.find(
@@ -184,31 +187,67 @@ export default async function BookingsPage({
       <section className="booking-list">
         <h2>Your bookings</h2>
         {!bookings.length && <p>No grooming bookings yet.</p>}
-        {bookings.map((booking) => (
-          <article key={booking.id} className="booking-card">
-            <div>
-              <span className="eyebrow">{booking.status}</span>
-              <h3>
-                {booking.dog_name} · {booking.service_name}
-              </h3>
-              <p>
-                {bookingDate(booking.starts_at)} · £
-                {(booking.price_pence_snapshot / 100).toFixed(2)}
-              </p>
-              <small>{booking.cancellation_terms_snapshot}</small>
-              {booking.cancellation_reason && (
-                <small>Reason: {booking.cancellation_reason}</small>
+        {bookings.map((booking) => {
+          const visit = visitData.visits.find(
+            (item) => item.booking_id === booking.id,
+          );
+          const events = visitData.events.filter(
+            (event) => event.visit_id === visit?.id,
+          );
+          return (
+            <article key={booking.id} className="booking-card">
+              <div>
+                <span className="eyebrow">
+                  {visit ? visitLabels[visit.status] : booking.status}
+                </span>
+                <h3>
+                  {booking.dog_name} · {booking.service_name}
+                </h3>
+                <p>
+                  {bookingDate(booking.starts_at)} · £
+                  {(booking.price_pence_snapshot / 100).toFixed(2)}
+                </p>
+                <small>{booking.cancellation_terms_snapshot}</small>
+                {booking.cancellation_reason && (
+                  <small>Reason: {booking.cancellation_reason}</small>
+                )}
+                {visit?.authorised_collector_name && (
+                  <small>
+                    Authorised collector: {visit.authorised_collector_name}
+                  </small>
+                )}
+                {visit?.status === "ready" && (
+                  <p className="ready-message">
+                    {booking.dog_name} is ready for collection. Please contact
+                    the club if you have not heard from the team.
+                  </p>
+                )}
+                {visit && (
+                  <details className="member-visit-history">
+                    <summary>Visit progress</summary>
+                    <ol>
+                      {events.map((event) => (
+                        <li key={event.id}>
+                          {visitLabels[event.to_status]}
+                          {event.action === "visit.corrected" && event.reason
+                            ? ` — ${event.reason}`
+                            : ""}
+                        </li>
+                      ))}
+                    </ol>
+                  </details>
+                )}
+              </div>
+              {booking.status === "confirmed" && !visit && (
+                <CancelBookingForm
+                  club={club.id}
+                  slug={slug}
+                  booking={booking.id}
+                />
               )}
-            </div>
-            {booking.status === "confirmed" && (
-              <CancelBookingForm
-                club={club.id}
-                slug={slug}
-                booking={booking.id}
-              />
-            )}
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </section>
     </main>
   );

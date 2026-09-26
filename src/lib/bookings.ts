@@ -453,6 +453,14 @@ export async function cancelBooking(
       throw new OnboardingError("Booking unavailable.");
     if (item.status !== "confirmed")
       throw new OnboardingError("This booking is already cancelled.");
+    const activeVisit = await tx.query(
+      "SELECT 1 FROM grooming_visits WHERE club_id=$1 AND booking_id=$2",
+      [club, booking],
+    );
+    if (activeVisit.rows.length)
+      throw new OnboardingError(
+        "This visit has started. Ask the club team for help.",
+      );
     await tx.query(
       "UPDATE grooming_bookings SET status='cancelled',cancelled_by=$1,cancellation_reason=$2,cancelled_at=now(),version=version+1 WHERE club_id=$3 AND id=$4",
       [actor, cancellationReason, club, booking],

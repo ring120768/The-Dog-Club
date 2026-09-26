@@ -7,6 +7,13 @@ import { requireAccount } from "@/lib/auth";
 import { database, scoped } from "@/lib/database";
 import { clubsFor, dogsFor } from "@/lib/dogs";
 import { bookingsFor } from "@/lib/bookings";
+import { visitsFor } from "@/lib/visits";
+import { visitLabels, type VisitStatus } from "@/lib/visit-contract";
+import {
+  ArrivalForm,
+  VisitCorrectionForm,
+  VisitProgressForm,
+} from "@/components/visit-forms";
 
 const londonDateTime = (value: string) =>
   new Intl.DateTimeFormat("en-GB", {
@@ -16,8 +23,10 @@ const londonDateTime = (value: string) =>
   }).format(new Date(value));
 export default async function Operations({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ visit?: string }>;
 }) {
   const { slug } = await params;
   const account = await requireAccount();
@@ -29,6 +38,8 @@ export default async function Operations({
   const dogs = await dogsFor(db, account.id, club.id);
   const applications = await applicationsFor(db, account.id, club.id);
   const bookings = await bookingsFor(db, account.id, club.id);
+  const visitData = await visitsFor(db, account.id, club.id);
+  const visitMessage = (await searchParams).visit;
   const care = await scoped(
     db,
     account.id,
@@ -43,6 +54,15 @@ export default async function Operations({
   );
   return (
     <main className="club-main">
+      {visitMessage && (
+        <p className="success" role="status">
+          {visitMessage === "arrived"
+            ? "Arrival recorded."
+            : visitMessage === "corrected"
+              ? "Visit state corrected and added to the audit history."
+              : `Visit updated: ${visitLabels[visitMessage as VisitStatus] ?? visitMessage}.`}
+        </p>
+      )}
       <span className="eyebrow">MANAGER WORKSPACE</span>
       <h1>Your club, at a glance.</h1>
       <p className="intro">
@@ -79,19 +99,83 @@ export default async function Operations({
         ) : (
           bookings
             .filter((booking) => booking.status === "confirmed")
-            .map((booking) => (
-              <article className="booking-card" key={booking.id}>
-                <div>
-                  <h3>
-                    {booking.dog_name} · {booking.service_name}
-                  </h3>
-                  <p>
-                    {londonDateTime(booking.starts_at)} ·{" "}
-                    {booking.resource_name}
-                  </p>
-                </div>
-              </article>
-            ))
+            .map((booking) => {
+              const visit = visitData.visits.find(
+                (item) => item.booking_id === booking.id,
+              );
+              const events = visitData.events.filter(
+                (event) => event.visit_id === visit?.id,
+              );
+              return (
+                <article className="booking-card visit-card" key={booking.id}>
+                  <div className="visit-card-main">
+                    <div>
+                      <span className="eyebrow">
+                        {visit ? visitLabels[visit.status] : "Booked"}
+                      </span>
+                      <h3>
+                        {booking.dog_name} · {booking.service_name}
+                      </h3>
+                      <p>
+                        {londonDateTime(booking.starts_at)} ·{" "}
+                        {booking.resource_name}
+                      </p>
+                      {visit?.authorised_collector_name && (
+                        <small>
+                          Authorised collector:{" "}
+                          {visit.authorised_collector_name}
+                        </small>
+                      )}
+                      {visit?.status === "ready" &&
+                        visit.notification_status === "manual_required" && (
+                          <p className="manual-contact">
+                            Ready contact has not been sent. Contact the member
+                            manually.
+                          </p>
+                        )}
+                    </div>
+                    {!visit ? (
+                      <ArrivalForm
+                        club={club.id}
+                        slug={slug}
+                        booking={booking.id}
+                      />
+                    ) : (
+                      <VisitProgressForm
+                        club={club.id}
+                        slug={slug}
+                        visit={visit.id}
+                        status={visit.status}
+                        collector={visit.authorised_collector_name}
+                      />
+                    )}
+                  </div>
+                  {visit && (
+                    <div className="visit-audit">
+                      <details>
+                        <summary>Visit history ({events.length})</summary>
+                        <ol>
+                          {events.map((event) => (
+                            <li key={event.id}>
+                              {visitLabels[event.to_status]}
+                              {event.action === "visit.corrected"
+                                ? ` — corrected: ${event.reason}`
+                                : ""}
+                            </li>
+                          ))}
+                        </ol>
+                      </details>
+                      <VisitCorrectionForm
+                        club={club.id}
+                        slug={slug}
+                        visit={visit.id}
+                        status={visit.status}
+                      />
+                    </div>
+                  )}
+                </article>
+              );
+            })
         )}
       </section>
       <div className="table-wrap">
