@@ -71,3 +71,7 @@ Automated acceptance provisions two differently branded operators through secure
 Platform owners can move operators through onboarding, trial, active, restricted and closed states using audited transition rules. Restriction preserves existing service obligations while blocking new invitations; closure removes ordinary tenant and public-profile access without deleting records. See [operator lifecycle](docs/OPERATOR_LIFECYCLE.md).
 
 Platform owners can also download a tenant-bound JSON archive with a record count and SHA-256 integrity value. Credentials, bearer tokens, hosted Stripe URLs and raw webhooks are excluded; restore requires separately verified identities and has been rehearsed against an isolated database. See [operator export and restore](docs/OPERATOR_EXPORT_AND_RESTORE.md) and [PostgreSQL rehearsal](docs/NON_PRODUCTION_POSTGRES_REHEARSAL.md).
+
+## iOS and Android
+
+Shared Capacitor projects now live in `ios/` and `android/`. Both debug targets build from the same repository and currently show an explicitly unconnected development shell using the demo dog identity. Run `npm run mobile:sync` after changing bundled assets. Native authentication, profile/photo journeys, push/deep links, signing and store distribution remain the next mobile increments; see [mobile foundation](docs/MOBILE_FOUNDATION.md).

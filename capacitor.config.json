@@ -1,0 +1,11 @@
+{
+  "appId": "uk.co.thedogclub.member",
+  "appName": "The Dog Club",
+  "webDir": "mobile-shell",
+  "ios": {
+    "contentInset": "automatic"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

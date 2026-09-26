@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">The Dog Club</string>
+    <string name="title_activity_main">The Dog Club</string>
+    <string name="package_name">uk.co.thedogclub.member</string>
+    <string name="custom_url_scheme">uk.co.thedogclub.member</string>
+</resources>
