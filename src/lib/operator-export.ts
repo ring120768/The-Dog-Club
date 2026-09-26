@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import type { Db, Queryable } from "./database";
 
 const format = "dog-club-operator-export" as const;
-const schemaVersion = 1 as const;
+const schemaVersion = 2 as const;
 
 // This order is both the archive contract and the foreign-key-safe restore order.
 // Tables containing credentials, invitation/recovery tokens or raw webhook payloads
@@ -35,6 +35,9 @@ export const operatorExportTables = [
   "resource_closures",
   "grooming_bookings",
   "booking_events",
+  "service_checkout_sessions",
+  "service_payments",
+  "service_payment_exceptions",
   "grooming_visits",
   "visit_events",
   "notification_outbox",
@@ -125,7 +128,8 @@ async function rowsFor(
   const projection =
     table === "admission_passes"
       ? "to_jsonb(t)-'code' AS data"
-      : table === "membership_checkout_sessions"
+      : table === "membership_checkout_sessions" ||
+          table === "service_checkout_sessions"
         ? "jsonb_set(to_jsonb(t),'{checkout_url}','null'::jsonb) AS data"
         : table === "membership_invoices"
           ? "jsonb_set(to_jsonb(t),'{hosted_invoice_url}','null'::jsonb) AS data"

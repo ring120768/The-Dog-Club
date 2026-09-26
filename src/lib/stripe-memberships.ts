@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import type { Db, Queryable } from "./database";
 import { OnboardingError } from "./onboarding";
+import { applyServiceCheckoutEvent } from "./service-payments";
 import type {
   CheckoutEvent,
   InvoiceEvent,
@@ -658,14 +659,19 @@ async function processOne(db: Db, account: string, eventId: string) {
         return true;
       }
       if (data.kind === "checkout.completed")
-        applied = await applyCheckout(tx, account, data);
+        applied =
+          (await applyServiceCheckoutEvent(tx, account, data)) ||
+          (await applyCheckout(tx, account, data));
       else if (data.kind === "checkout.failed") {
-        const failed = await tx.query(
-          `UPDATE membership_checkout_sessions SET status='failed',checkout_url=NULL,updated_at=now()
-           WHERE provider_account_id=$1 AND provider_session_id=$2`,
-          [account, data.sessionId],
-        );
-        applied = Boolean(failed.affectedRows);
+        applied = await applyServiceCheckoutEvent(tx, account, data);
+        if (!applied) {
+          const failed = await tx.query(
+            `UPDATE membership_checkout_sessions SET status='failed',checkout_url=NULL,updated_at=now()
+             WHERE provider_account_id=$1 AND provider_session_id=$2`,
+            [account, data.sessionId],
+          );
+          applied = Boolean(failed.affectedRows);
+        }
       } else if (
         data.kind === "invoice.paid" ||
         data.kind === "invoice.payment_failed"

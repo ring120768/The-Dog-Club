@@ -37,6 +37,10 @@ export function normaliseStripeEvent(event: Stripe.Event): StripeEventEnvelope {
         "paid" | "unpaid" | "no_payment_required",
       customerId: id(session.customer),
       subscriptionId: id(session.subscription),
+      amountTotal: session.amount_total,
+      currency: session.currency,
+      paymentIntentId: id(session.payment_intent),
+      clientReferenceId: session.client_reference_id,
     };
   } else if (event.type === "checkout.session.async_payment_failed") {
     data = { kind: "checkout.failed", sessionId: event.data.object.id };

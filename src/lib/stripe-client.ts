@@ -1,6 +1,9 @@
 import "server-only";
 import Stripe from "stripe";
-import type { StripeMembershipGateway } from "./stripe-contract";
+import type {
+  StripeMembershipGateway,
+  StripeServiceGateway,
+} from "./stripe-contract";
 import { verifyStripeWebhookWithClient } from "./stripe-webhook";
 
 let client: Stripe | undefined;
@@ -44,6 +47,45 @@ export const stripeMembershipGateway: StripeMembershipGateway = {
       { cancel_at_period_end: true },
       { stripeAccount: input.connectedAccountId },
     );
+  },
+};
+
+export const stripeServiceGateway: StripeServiceGateway = {
+  async createServiceCheckout(input) {
+    const session = await stripeClient().checkout.sessions.create(
+      {
+        mode: "payment",
+        line_items: [
+          {
+            price_data: {
+              currency: "gbp",
+              unit_amount: input.amountPence,
+              product_data: { name: input.serviceName },
+            },
+            quantity: 1,
+          },
+        ],
+        client_reference_id: input.clientReferenceId,
+        customer_email: input.customerEmail,
+        success_url: input.successUrl,
+        cancel_url: input.cancelUrl,
+        expires_at: Math.floor(input.expiresAt.getTime() / 1000),
+        payment_intent_data: {
+          metadata: { dog_club_booking_id: input.bookingId },
+        },
+        integration_identifier: input.integrationIdentifier,
+      },
+      {
+        stripeAccount: input.connectedAccountId,
+        idempotencyKey: input.idempotencyKey,
+      },
+    );
+    if (!session.url) throw new Error("Stripe did not return a checkout URL.");
+    return {
+      id: session.id,
+      url: session.url,
+      expiresAt: new Date(session.expires_at * 1000),
+    };
   },
 };
 
