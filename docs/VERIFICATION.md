@@ -14,7 +14,7 @@
 - the application role cannot read account credentials or sessions;
 - invalid inputs and incorrect passwords are rejected.
 
-The SQL policy tests do not constitute a complete production security review. Local photo storage is covered by the photo suite; managed object storage, exports, background jobs and webhooks do not exist yet and their isolation is not claimed.
+The SQL policy tests do not constitute a complete production security review. Local photo storage and platform-owned operator export are covered; managed object storage and production background/provider delivery still require separate review.
 
 ## Browser
 
@@ -41,5 +41,11 @@ Local browser acceptance confirms the operator list distinguishes the intentiona
 # Operator lifecycle verification — 26/09/2026
 
 TypeScript and all 95 tests pass. Lifecycle tests prove that onboarding admits managers for setup while blocking members; trial requires 5/5 readiness; activation additionally requires explicit external-review confirmation; restricted operators retain existing access and records while new invitations fail; and closure removes tenant and public-profile access without deleting membership records. Closed operators cannot be silently reopened. State events retain actor, reason and readiness snapshot.
+
+## Operator portability and PostgreSQL rehearsal — 26/09/2026
+
+TypeScript and all 98 embedded-database tests pass. The new archive suite proves platform-only access, one-tenant contents, removal of credentials, bearer codes and hosted Stripe URLs, SHA-256 tamper detection, binary dog-photo restoration, inactive replacement admission passes and full rollback when an identity prerequisite is absent. The authenticated local Willow download route returned HTTP 200 and the platform panel rendered without a browser error.
+
+All 18 migrations then applied to a clean disposable Supabase PostgreSQL 17 container as the schema-owning `supabase_admin` role. The resulting 52-table schema passed all 98 tests through the rollback-only shared-PostgreSQL harness. Effective `club_app` grants were inspected, and final counts confirmed that no synthetic clubs or export events remained. See [the rehearsal record](NON_PRODUCTION_POSTGRES_REHEARSAL.md).
 
 Local browser acceptance confirms Willow renders as Trial with the permitted transition form and Coast cannot be activated while its readiness score is 1/5. The failed activation leaves Coast in Trial and displays the readiness error. Production schema, data and services remain untouched.
