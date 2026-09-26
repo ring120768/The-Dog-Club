@@ -11,6 +11,7 @@ import {
   Settings2,
   ShieldCheck,
   Users,
+  UserCog,
 } from "lucide-react";
 import { requireAccount } from "@/lib/auth";
 import { database } from "@/lib/database";
@@ -65,22 +66,34 @@ export default async function ClubLayout({
             <Users size={19} />
             Household access
           </Link>
-          {club.role === "manager" && (
+          {(club.role === "manager" || club.can_manage_booking_setup) && (
             <>
-              <Link href={`/club/${slug}/operations`}>
-                <ShieldCheck size={19} />
-                Manager overview
-              </Link>
-              <Link href={`/club/${slug}/booking-setup`}>
-                <Settings2 size={19} />
-                Booking setup
-              </Link>
+              {club.role === "manager" && (
+                <Link href={`/club/${slug}/operations`}>
+                  <ShieldCheck size={19} />
+                  Manager overview
+                </Link>
+              )}
+              {(club.role === "manager" || club.can_manage_booking_setup) && (
+                <Link href={`/club/${slug}/booking-setup`}>
+                  <Settings2 size={19} />
+                  Booking setup
+                </Link>
+              )}
             </>
           )}
-          {club.role === "manager" && (
+          {(club.role === "manager" || club.can_manage_staff) && (
             <>
-              <Link href={`/club/${slug}/settings`}>Club branding</Link>
-              <Link href={`/club/${slug}/invitations`}>Invite members</Link>
+              {club.role === "manager" && (
+                <Link href={`/club/${slug}/settings`}>Club branding</Link>
+              )}
+              {club.role === "manager" && (
+                <Link href={`/club/${slug}/invitations`}>Invite members</Link>
+              )}
+              <Link href={`/club/${slug}/staff`}>
+                <UserCog size={19} />
+                Staff access
+              </Link>
             </>
           )}
         </nav>

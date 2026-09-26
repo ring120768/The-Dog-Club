@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { scoped, type Db, type Queryable } from "./database";
 import { OnboardingError } from "./onboarding";
+import { requireStaffPermission } from "./staff";
 
 export type GroomingService = {
   id: string;
@@ -47,15 +48,6 @@ const minutes = (time: string) => {
   const [hours, mins] = time.split(":").map(Number);
   return hours * 60 + mins;
 };
-
-async function requireManager(tx: Queryable, actor: string, club: string) {
-  const allowed = await tx.query(
-    "SELECT 1 FROM memberships WHERE club_id=$1 AND account_id=$2 AND role='manager'",
-    [club, actor],
-  );
-  if (!allowed.rows.length)
-    throw new OnboardingError("Manager access required.");
-}
 
 async function requireEligibleDog(
   tx: Queryable,
@@ -105,6 +97,8 @@ export async function createBookingSetup(
       ends_at: timeInput,
       break_starts_at: optionalTime.default(""),
       break_ends_at: optionalTime.default(""),
+      location_id: z.uuid().optional(),
+      staff_id: z.string().min(1).max(200).optional(),
     })
     .parse(input);
   if (data.duration_minutes % 15 || data.cleanup_minutes % 15)
@@ -130,7 +124,30 @@ export async function createBookingSetup(
   }
   const pricePence = Math.round(Number(data.price_pounds) * 100);
   return db.transaction(async (tx) => {
-    await requireManager(tx, actor, club);
+    await requireStaffPermission(tx, actor, club, "can_manage_booking_setup");
+    const location = data.location_id
+      ? (
+          await tx.query<{ id: string }>(
+            "SELECT id FROM club_locations WHERE club_id=$1 AND id=$2 AND active",
+            [club, data.location_id],
+          )
+        ).rows[0]
+      : (
+          await tx.query<{ id: string }>(
+            "SELECT id FROM club_locations WHERE club_id=$1 AND active ORDER BY created_at LIMIT 1",
+            [club],
+          )
+        ).rows[0];
+    if (!location)
+      throw new OnboardingError("Choose an active venue location.");
+    const staffId = data.staff_id ?? actor;
+    const staff = await tx.query(
+      `SELECT 1 FROM memberships m LEFT JOIN staff_members s ON s.club_id=m.club_id AND s.account_id=m.account_id
+       WHERE m.club_id=$1 AND m.account_id=$2 AND (m.role='manager' OR (s.active AND s.role='groomer'))`,
+      [club, staffId],
+    );
+    if (!staff.rows.length)
+      throw new OnboardingError("Choose an active groomer.");
     const serviceId = randomUUID();
     const resourceId = randomUUID();
     const shiftId = randomUUID();
@@ -150,17 +167,25 @@ export async function createBookingSetup(
       ],
     );
     await tx.query(
-      "INSERT INTO grooming_resources(id,club_id,name) VALUES($1,$2,$3)",
-      [resourceId, club, data.resource_name],
+      "INSERT INTO grooming_resources(id,club_id,name,location_id) VALUES($1,$2,$3,$4)",
+      [resourceId, club, data.resource_name, location.id],
     );
     await tx.query(
       "INSERT INTO staff_service_qualifications(club_id,account_id,service_id) VALUES($1,$2,$3)",
-      [club, actor, serviceId],
+      [club, staffId, serviceId],
     );
     await tx.query(
-      `INSERT INTO published_shifts(id,club_id,staff_id,starts_at,ends_at)
-       VALUES($1,$2,$3,($4||' '||$5)::timestamp AT TIME ZONE 'Europe/London',($4||' '||$6)::timestamp AT TIME ZONE 'Europe/London')`,
-      [shiftId, club, actor, data.date, data.starts_at, data.ends_at],
+      `INSERT INTO published_shifts(id,club_id,staff_id,starts_at,ends_at,location_id)
+       VALUES($1,$2,$3,($4||' '||$5)::timestamp AT TIME ZONE 'Europe/London',($4||' '||$6)::timestamp AT TIME ZONE 'Europe/London',$7)`,
+      [
+        shiftId,
+        club,
+        staffId,
+        data.date,
+        data.starts_at,
+        data.ends_at,
+        location.id,
+      ],
     );
     if (hasBreak)
       await tx.query(
@@ -197,7 +222,7 @@ export async function closeResource(
   if (minutes(data.ends_at) <= minutes(data.starts_at))
     throw new OnboardingError("The closure must end after it starts.");
   await db.transaction(async (tx) => {
-    await requireManager(tx, actor, club);
+    await requireStaffPermission(tx, actor, club, "can_manage_booking_setup");
     const resource = await tx.query(
       "SELECT id FROM grooming_resources WHERE club_id=$1 AND id=$2 FOR UPDATE",
       [club, data.resource_id],
@@ -237,41 +262,132 @@ export async function activeServices(db: Db, actor: string, club: string) {
 
 export async function bookingSetupFor(db: Db, actor: string, club: string) {
   return db.transaction(async (tx) => {
-    await requireManager(tx, actor, club);
-    const [services, resources, shifts, closures] = await Promise.all([
-      tx.query<GroomingService>(
-        "SELECT * FROM grooming_services WHERE club_id=$1 ORDER BY name",
-        [club],
-      ),
-      tx.query<{ id: string; name: string; active: boolean }>(
-        "SELECT id,name,active FROM grooming_resources WHERE club_id=$1 ORDER BY name",
-        [club],
-      ),
-      tx.query<{
-        id: string;
-        starts_at: string;
-        ends_at: string;
-        status: string;
-      }>(
-        "SELECT id,starts_at,ends_at,status FROM published_shifts WHERE club_id=$1 ORDER BY starts_at",
-        [club],
-      ),
-      tx.query<{
-        resource_id: string;
-        starts_at: string;
-        ends_at: string;
-        reason: string;
-      }>(
-        "SELECT resource_id,starts_at,ends_at,reason FROM resource_closures WHERE club_id=$1 ORDER BY starts_at",
-        [club],
-      ),
-    ]);
+    await requireStaffPermission(tx, actor, club, "can_manage_booking_setup");
+    const [services, resources, shifts, closures, locations, staff] =
+      await Promise.all([
+        tx.query<GroomingService>(
+          "SELECT * FROM grooming_services WHERE club_id=$1 ORDER BY name",
+          [club],
+        ),
+        tx.query<{
+          id: string;
+          name: string;
+          active: boolean;
+          location_id: string;
+          location_name: string;
+        }>(
+          `SELECT r.id,r.name,r.active,r.location_id,l.name AS location_name FROM grooming_resources r
+         JOIN club_locations l ON l.club_id=r.club_id AND l.id=r.location_id WHERE r.club_id=$1 ORDER BY l.name,r.name`,
+          [club],
+        ),
+        tx.query<{
+          id: string;
+          staff_id: string;
+          staff_email: string;
+          location_name: string;
+          starts_at: string;
+          ends_at: string;
+          status: string;
+        }>(
+          `SELECT s.id,s.staff_id,a.email AS staff_email,l.name AS location_name,s.starts_at,s.ends_at,s.status
+         FROM published_shifts s JOIN accounts a ON a.id=s.staff_id JOIN club_locations l ON l.club_id=s.club_id AND l.id=s.location_id
+         WHERE s.club_id=$1 ORDER BY s.starts_at`,
+          [club],
+        ),
+        tx.query<{
+          resource_id: string;
+          starts_at: string;
+          ends_at: string;
+          reason: string;
+        }>(
+          "SELECT resource_id,starts_at,ends_at,reason FROM resource_closures WHERE club_id=$1 ORDER BY starts_at",
+          [club],
+        ),
+        tx.query<{
+          id: string;
+          name: string;
+          address_label: string;
+          active: boolean;
+        }>(
+          "SELECT id,name,address_label,active FROM club_locations WHERE club_id=$1 ORDER BY name",
+          [club],
+        ),
+        tx.query<{ account_id: string; email: string }>(
+          `SELECT m.account_id,a.email FROM memberships m JOIN accounts a ON a.id=m.account_id
+        LEFT JOIN staff_members s ON s.club_id=m.club_id AND s.account_id=m.account_id
+        WHERE m.club_id=$1 AND (m.role='manager' OR (s.active AND s.role='groomer')) ORDER BY a.email`,
+          [club],
+        ),
+      ]);
     return {
       services: services.rows,
       resources: resources.rows,
       shifts: shifts.rows,
       closures: closures.rows,
+      locations: locations.rows,
+      staff: staff.rows,
     };
+  });
+}
+
+export async function createLocation(
+  db: Db,
+  actor: string,
+  club: string,
+  input: unknown,
+) {
+  const data = z
+    .object({
+      name: z.string().trim().min(2).max(100),
+      address_label: z.string().trim().max(200),
+    })
+    .parse(input);
+  await db.transaction(async (tx) => {
+    await requireStaffPermission(tx, actor, club, "can_manage_booking_setup");
+    await tx.query(
+      "INSERT INTO club_locations(id,club_id,name,address_label) VALUES($1,$2,$3,$4)",
+      [randomUUID(), club, data.name, data.address_label],
+    );
+  });
+}
+
+export async function setInventoryActive(
+  db: Db,
+  actor: string,
+  club: string,
+  input: unknown,
+) {
+  const data = z
+    .object({
+      kind: z.enum(["location", "service", "resource"]),
+      id: z.uuid(),
+      active: z.enum(["true", "false"]),
+    })
+    .parse(input);
+  await db.transaction(async (tx) => {
+    await requireStaffPermission(tx, actor, club, "can_manage_booking_setup");
+    const table =
+      data.kind === "location"
+        ? "club_locations"
+        : data.kind === "service"
+          ? "grooming_services"
+          : "grooming_resources";
+    if (data.kind === "location" && data.active === "false") {
+      const dependencies = await tx.query(
+        `SELECT 1 FROM grooming_resources WHERE club_id=$1 AND location_id=$2 AND active UNION ALL SELECT 1 FROM published_shifts WHERE club_id=$1 AND location_id=$2 AND status='published' LIMIT 1`,
+        [club, data.id],
+      );
+      if (dependencies.rows.length)
+        throw new OnboardingError(
+          "Retire active stations and published shifts at this location first.",
+        );
+    }
+    const changed = await tx.query(
+      `UPDATE ${table} SET active=$1 WHERE club_id=$2 AND id=$3 RETURNING id`,
+      [data.active === "true", club, data.id],
+    );
+    if (!changed.rows.length)
+      throw new OnboardingError("Inventory item unavailable.");
   });
 }
 
@@ -301,10 +417,12 @@ export async function availabilityFor(
        SELECT gs AS starts_at,s.staff_id,r.id AS resource_id
        FROM published_shifts s
        JOIN staff_service_qualifications q ON q.club_id=s.club_id AND q.account_id=s.staff_id AND q.service_id=$2
-       JOIN memberships m ON m.club_id=s.club_id AND m.account_id=s.staff_id AND m.role='manager'
+       JOIN memberships m ON m.club_id=s.club_id AND m.account_id=s.staff_id
+       LEFT JOIN staff_members sm ON sm.club_id=m.club_id AND sm.account_id=m.account_id
        CROSS JOIN grooming_resources r
        CROSS JOIN LATERAL generate_series(s.starts_at,s.ends_at-($4*interval '1 minute'),interval '15 minutes') gs
-       WHERE s.club_id=$1 AND s.status='published' AND r.club_id=s.club_id AND r.active
+       WHERE s.club_id=$1 AND s.status='published' AND (m.role='manager' OR (sm.active AND sm.role='groomer'))
+       AND r.club_id=s.club_id AND r.location_id=s.location_id AND r.active
        AND (gs AT TIME ZONE 'Europe/London')::date=$3::date AND gs>now()
        AND NOT EXISTS(SELECT 1 FROM shift_breaks b WHERE b.club_id=s.club_id AND b.shift_id=s.id AND b.starts_at<gs+($4*interval '1 minute') AND b.ends_at>gs)
        AND NOT EXISTS(SELECT 1 FROM resource_closures c WHERE c.club_id=s.club_id AND c.resource_id=r.id AND c.starts_at<gs+($4*interval '1 minute') AND c.ends_at>gs)
@@ -356,20 +474,21 @@ export async function reserveBooking(
     const busyEnds = new Date(
       serviceEnds.getTime() + service.cleanup_minutes * 60_000,
     );
-    const resources = await tx.query<{ id: string }>(
-      "SELECT id FROM grooming_resources WHERE club_id=$1 AND active ORDER BY id FOR UPDATE",
+    const resources = await tx.query<{ id: string; location_id: string }>(
+      "SELECT id,location_id FROM grooming_resources WHERE club_id=$1 AND active ORDER BY id FOR UPDATE",
       [club],
     );
     const staff = await tx.query<{ account_id: string }>(
       `SELECT m.account_id FROM memberships m
        JOIN staff_service_qualifications q ON q.club_id=m.club_id AND q.account_id=m.account_id AND q.service_id=$2
-       WHERE m.club_id=$1 AND m.role='manager' ORDER BY m.account_id FOR UPDATE OF m`,
+       LEFT JOIN staff_members s ON s.club_id=m.club_id AND s.account_id=m.account_id
+       WHERE m.club_id=$1 AND (m.role='manager' OR (s.active AND s.role='groomer')) ORDER BY m.account_id FOR UPDATE OF m`,
       [club, data.service_id],
     );
     let chosen: { staff: string; resource: string } | undefined;
     for (const person of staff.rows) {
-      const shift = await tx.query(
-        `SELECT s.id FROM published_shifts s WHERE s.club_id=$1 AND s.staff_id=$2 AND s.status='published'
+      const shift = await tx.query<{ id: string; location_id: string }>(
+        `SELECT s.id,s.location_id FROM published_shifts s WHERE s.club_id=$1 AND s.staff_id=$2 AND s.status='published'
          AND s.starts_at<=$3 AND s.ends_at>=$4
          AND NOT EXISTS(SELECT 1 FROM shift_breaks b WHERE b.club_id=s.club_id AND b.shift_id=s.id AND b.starts_at<$4 AND b.ends_at>$3)
          AND NOT EXISTS(SELECT 1 FROM grooming_bookings x WHERE x.club_id=s.club_id AND x.status='confirmed' AND x.staff_id=s.staff_id AND x.starts_at<$4 AND x.busy_ends_at>$3)
@@ -383,6 +502,7 @@ export async function reserveBooking(
       );
       if (!shift.rows.length) continue;
       for (const resource of resources.rows) {
+        if (resource.location_id !== shift.rows[0].location_id) continue;
         const free = await tx.query(
           `SELECT 1 WHERE NOT EXISTS(SELECT 1 FROM resource_closures c WHERE c.club_id=$1 AND c.resource_id=$2 AND c.starts_at<$4 AND c.ends_at>$3)
            AND NOT EXISTS(SELECT 1 FROM grooming_bookings x WHERE x.club_id=$1 AND x.status='confirmed' AND x.resource_id=$2 AND x.starts_at<$4 AND x.busy_ends_at>$3)`,

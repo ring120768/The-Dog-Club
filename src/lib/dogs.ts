@@ -12,6 +12,10 @@ export type Club = {
   emblem: "paw" | "dog" | "heart" | "sparkles";
   avatar_tone: "sand" | "sage" | "rose";
   version: number;
+  role?: string;
+  staff_role?: string | null;
+  can_manage_staff?: boolean;
+  can_manage_booking_setup?: boolean;
 };
 export type Dog = {
   id: string;
@@ -42,7 +46,11 @@ export async function clubsFor(db: Db, account: string) {
     async (tx) =>
       (
         await tx.query<Club & { role: string }>(
-          "SELECT c.*, m.role FROM clubs c JOIN memberships m ON c.id=m.club_id ORDER BY c.name",
+          `SELECT c.*,m.role,s.role AS staff_role,
+           COALESCE(s.active AND s.can_manage_staff,false) AS can_manage_staff,
+           COALESCE(s.active AND s.can_manage_booking_setup,false) AS can_manage_booking_setup
+           FROM clubs c JOIN memberships m ON c.id=m.club_id
+           LEFT JOIN staff_members s ON s.club_id=m.club_id AND s.account_id=m.account_id ORDER BY c.name`,
         )
       ).rows,
   );
