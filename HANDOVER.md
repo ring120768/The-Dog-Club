@@ -178,3 +178,13 @@ Branch `codex/operator-lifecycle`, stacked on `codex/operator-readiness`. Adds o
 Validation: TypeScript and all 95 tests pass. Four lifecycle tests cover onboarding access, readiness and external activation gates, platform-only audit history, restricted growth with retained records, closure, direct profile-write denial and irreversible closure. Local browser acceptance shows Willow’s Trial controls and rejects Coast activation at 1/5 readiness. The client/server lifecycle contract is split so no database module reaches the browser bundle. Production remains untouched.
 
 Next: implement a permissioned per-operator export plus tested restore/offboarding procedure, then rehearse the full migration stack in non-production PostgreSQL before any live rollout.
+
+## Operator export and restore checkpoint — 26/09/2026
+
+Branch `codex/operator-export-restore`, stacked on `codex/operator-lifecycle`. The platform-owner console downloads a versioned, tenant-bound JSON archive with a record count and SHA-256 integrity value. It includes operator configuration and operational history, including binary dog photographs, while excluding passwords, sessions, invitation/recovery tokens, admission pass bearer codes, hosted Stripe URLs and raw Stripe webhook payloads. Export and completed restore operations are audited.
+
+Restore is intentionally engineer-operated. It requires a clean migrated destination and exact, separately verified account identities; credentials never travel in the archive. Restore is transactional, refuses an existing operator ID, recreates admission passes with replacement codes in an inactive state and advances restored identity sequences. The offboarding runbook is in `docs/OPERATOR_EXPORT_AND_RESTORE.md`; this feature never deletes live data.
+
+Validation: run the full TypeScript and test suites. The export test must cover platform-only access, tenant boundaries, the credential-free archive, tamper detection, dog-photo restoration, inactive replacement admission passes, a complete isolated-database restore and rollback when an identity prerequisite is missing. Production remains untouched.
+
+Next: rehearse the complete migration stack and the documented export/restore flow in non-production PostgreSQL, inspect effective grants, then continue the remaining PRD gaps without describing production readiness prematurely.
