@@ -42,6 +42,9 @@ test("mobile grooming flow preserves credits and hands card payments to Stripe",
   assert.match(script, /\/service-checkouts/);
   assert.match(script, /crypto\.randomUUID\(\)/);
   assert.match(script, /Plugins\?\.Browser/);
+  assert.match(script, /Plugins\?\.LocalDemoBrowser/);
+  assert.match(script, /platform\(\) === "android"/);
+  assert.match(script, /booking-credit.*change/s);
   assert.match(script, /browserFinished/);
   assert.match(script, /held for 30 minutes/);
   assert.match(script, /paymentState === "paid"/);

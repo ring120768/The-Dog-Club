@@ -10,7 +10,11 @@ import {
   revokeMobileSession,
 } from "../src/lib/mobile-session";
 import { testDatabase } from "./db";
-import { mobileCorsHeaders, mobilePhoto } from "../src/lib/mobile-http";
+import {
+  mobileCorsHeaders,
+  mobilePhoto,
+  mobileRequestOrigin,
+} from "../src/lib/mobile-http";
 
 let db: Db;
 
@@ -141,10 +145,32 @@ test("mobile CORS allows only native or explicitly configured origins", () => {
   assert.equal(
     mobileCorsHeaders(
       new Request("https://example.test", {
+        headers: { origin: "https://localhost" },
+      }),
+    )?.get("Access-Control-Allow-Origin"),
+    "https://localhost",
+  );
+  assert.equal(
+    mobileCorsHeaders(
+      new Request("https://example.test", {
         headers: { origin: "https://hostile.example" },
       }),
     ),
     null,
+  );
+});
+
+test("mobile request origin preserves the emulator-facing host", () => {
+  assert.equal(
+    mobileRequestOrigin(
+      new Request("http://0.0.0.0:3100/api/mobile/session", {
+        headers: {
+          host: "10.0.2.2:3100",
+          "x-forwarded-proto": "http",
+        },
+      }),
+    ),
+    "http://10.0.2.2:3100",
   );
 });
 
