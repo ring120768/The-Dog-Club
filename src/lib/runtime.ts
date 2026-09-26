@@ -1,4 +1,5 @@
 export type RuntimeEnvironment = {
+  DOGCLUB_DB?: string;
   DOGCLUB_LOCAL_DEMO?: string;
   NODE_ENV?: string;
 };

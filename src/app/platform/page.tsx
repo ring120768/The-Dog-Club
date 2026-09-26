@@ -5,10 +5,22 @@ import { platformClubs } from "@/lib/branding";
 import { operatorReadinessForPlatform } from "@/lib/operator-readiness";
 import { ClubMark } from "@/components/club-mark";
 import { operatorStatePolicy } from "@/lib/operator-lifecycle-contract";
-export default async function PlatformHome() {
+import { isDemoMode } from "@/lib/runtime";
+import { resetDemoActivityAction } from "./demo-actions";
+
+export default async function PlatformHome({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    reset?: string;
+    club?: string;
+    removed?: string;
+  }>;
+}) {
   const account = await requireAccount();
   const db = await database();
   const clubs = await platformClubs(db, account.id);
+  const notice = await searchParams;
   const readiness = new Map(
     (
       await operatorReadinessForPlatform(
@@ -37,6 +49,17 @@ export default async function PlatformHome() {
           </Link>
         </div>
       </div>
+      {notice.reset === "complete" && (
+        <p className="notice success" role="status">
+          Demo activity reset for {notice.club}. Removed {notice.removed ?? "0"}{" "}
+          transactional records; club setup was preserved.
+        </p>
+      )}
+      {notice.reset === "confirmation-required" && (
+        <p className="notice error" role="alert">
+          Tick the confirmation box before resetting demo activity.
+        </p>
+      )}
       <div className="operator-grid">
         {clubs.map((club) => {
           const progress = readiness.get(club.id)!;
@@ -66,6 +89,29 @@ export default async function PlatformHome() {
               <Link className="inline-link" href={`/platform/${club.slug}`}>
                 Review operator →
               </Link>
+              {isDemoMode() && (
+                <details className="demo-reset">
+                  <summary>Reset demo activity</summary>
+                  <p>
+                    Clears bookings, visits and simulated payments while
+                    preserving this club’s setup.
+                  </p>
+                  <form action={resetDemoActivityAction}>
+                    <input type="hidden" name="club" value={club.id} />
+                    <label className="check-line">
+                      <input
+                        type="checkbox"
+                        name="confirmation"
+                        value="confirmed"
+                      />
+                      I understand this clears the fictional activity history.
+                    </label>
+                    <button className="text-button danger" type="submit">
+                      Reset this demo club
+                    </button>
+                  </form>
+                </details>
+              )}
             </article>
           );
         })}
