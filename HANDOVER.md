@@ -198,3 +198,13 @@ Branch `codex/mobile-foundation`, stacked on `codex/operator-export-restore`. Ad
 The latest 8.5.2 CLI was rejected because `npm audit` reported a moderate transitive `uuid` advisory through its Xcode parser. The compatible 8.4.3 dependency set reports zero vulnerabilities. Android debug assembly passes with the installed Java 21 runtime; Java 25 is too new for the generated Gradle toolchain. The unsigned iOS simulator build passes with Xcode 26.5. No signing identity, store listing, production endpoint, push entitlement or external deployment was created.
 
 Next: add a native-safe authentication/API contract and exercise sign-in, tenant selection, dog profile and photo selection on both simulators. Keep camera permissions, push/deep links, account deletion, signing and distribution behind their own acceptance gates.
+
+## Mobile member-session checkpoint — 26/09/2026
+
+Branch `codex/mobile-member-session`, stacked on `codex/mobile-foundation`. Adds a native-safe server contract and shared iOS/Android development journey for member sign-in, club selection and tenant-scoped dog lists. Mobile sessions use 256-bit bearer tokens, store only SHA-256 digests, expire after eight hours and revoke on sign-out. The shell keeps the token in memory only and therefore signs out on close or refresh. Password hashes, care notes, owner account IDs and stored token hashes are never returned.
+
+The API reuses the existing lifecycle and row-level tenant boundary. It allows the fixed Capacitor origins plus exact configured test origins, never wildcard CORS. The development shell accepts only HTTPS endpoints or recognised local simulator addresses. The visible server field must be removed in favour of a compiled reviewed endpoint before a signed release.
+
+Validation: TypeScript and all 104 isolated tests pass. Mobile coverage proves token hashing, normalised sign-in, generic invalid credentials, expiry, revocation, club/dog tenant isolation, restricted-role denial and CORS rejection. Both native projects have been synchronised with the new shell. Production schema, data, credentials and deployment remain untouched.
+
+Next: provide bearer-authorised dog detail/photo delivery, then run the complete journey on iOS and Android against an HTTPS non-production deployment. Review Keychain/Keystore storage and device-loss revocation before persisting sessions; review camera/library privacy text before adding photo selection.
