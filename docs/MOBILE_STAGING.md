@@ -4,9 +4,10 @@ The native member app must be compiled against a reviewed non-production HTTPS o
 
 ## Environment boundary
 
-- Use a separate Supabase project or other isolated PostgreSQL database containing synthetic records only.
-- Set `DOGCLUB_DB=supabase` and its staging `DATABASE_URL` in the Vercel Preview environment. Never copy the production connection string into Preview.
-- For a serverless Vercel deployment, use the Supabase transaction pooler connection on port 6543. The application does not use named prepared statements.
+- The current staging database is the Vercel Marketplace Neon resource `dog-club-staging`, on the Free plan in London. It contains synthetic records only.
+- Set `DOGCLUB_DB=postgres` and its staging `DATABASE_URL` in the Vercel Preview environment. Never copy the production connection string into Preview.
+- Use Neon's pooled `DATABASE_URL` for the Vercel runtime and `DATABASE_URL_UNPOOLED` only for controlled migrations. The application does not use named prepared statements.
+- `DOGCLUB_DB=postgres` is scoped to the `codex/mobile-https-staging` Preview branch. Production retains its existing Supabase configuration.
 - Set `MOBILE_APP_SERVER_URL` locally to the stable HTTPS staging origin when preparing native assets. It is compiled into the app and removes the editable server field.
 - Keep `MOBILE_STAGING_EMAIL` and `MOBILE_STAGING_PASSWORD` in the local environment only. They are used by the acceptance script and are never compiled into the app.
 

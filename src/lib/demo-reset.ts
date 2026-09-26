@@ -1,6 +1,10 @@
 import { z } from "zod";
 import type { Db, Queryable } from "./database";
-import { isDemoMode, type RuntimeEnvironment } from "./runtime";
+import {
+  isDemoMode,
+  isHostedPostgres,
+  type RuntimeEnvironment,
+} from "./runtime";
 
 const clubId = z.string().trim().min(1).max(100);
 
@@ -30,7 +34,7 @@ export async function resetDemoActivity(
   requestedClub: string,
   environment: RuntimeEnvironment = process.env,
 ): Promise<DemoResetResult> {
-  if (!isDemoMode(environment) || environment.DOGCLUB_DB === "supabase")
+  if (!isDemoMode(environment) || isHostedPostgres(environment))
     throw new DemoResetError("Demo reset is unavailable in this environment.");
   const club = clubId.parse(requestedClub);
 

@@ -109,7 +109,7 @@ test("platform owner resets transactional activity but preserves demo setup", as
   );
 });
 
-test("reset rejects non-owners, production, Supabase and non-synthetic clubs", async () => {
+test("reset rejects non-owners, production, hosted PostgreSQL and non-synthetic clubs", async () => {
   await assert.rejects(
     resetDemoActivity(db, "alice", club, demoEnvironment),
     /Platform access/,
@@ -118,6 +118,14 @@ test("reset rejects non-owners, production, Supabase and non-synthetic clubs", a
     resetDemoActivity(db, "platform-owner", club, {
       DOGCLUB_LOCAL_DEMO: "1",
       NODE_ENV: "production",
+    }),
+    /unavailable/,
+  );
+  await assert.rejects(
+    resetDemoActivity(db, "platform-owner", club, {
+      DOGCLUB_LOCAL_DEMO: "1",
+      NODE_ENV: "test",
+      DOGCLUB_DB: "postgres",
     }),
     /unavailable/,
   );

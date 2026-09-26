@@ -36,7 +36,7 @@ test("platform owner receives a bounded synthetic walkthrough projection", async
   );
 });
 
-test("guide rejects ordinary users, production and Supabase", async () => {
+test("guide rejects ordinary users, production and hosted PostgreSQL", async () => {
   await assert.rejects(
     demoGuideFor(db, "alice", "willow", demoEnvironment),
     /Platform access/,
@@ -53,6 +53,14 @@ test("guide rejects ordinary users, production and Supabase", async () => {
       DOGCLUB_LOCAL_DEMO: "1",
       NODE_ENV: "test",
       DOGCLUB_DB: "supabase",
+    }),
+    /unavailable/,
+  );
+  await assert.rejects(
+    demoGuideFor(db, "platform-owner", "willow", {
+      DOGCLUB_LOCAL_DEMO: "1",
+      NODE_ENV: "test",
+      DOGCLUB_DB: "postgres",
     }),
     /unavailable/,
   );

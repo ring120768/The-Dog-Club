@@ -4,6 +4,12 @@ export type RuntimeEnvironment = {
   NODE_ENV?: string;
 };
 
+export function isHostedPostgres(
+  environment: RuntimeEnvironment = process.env,
+) {
+  return ["postgres", "supabase"].includes(environment.DOGCLUB_DB ?? "");
+}
+
 export function isDemoMode(environment: RuntimeEnvironment = process.env) {
   return (
     environment.DOGCLUB_LOCAL_DEMO === "1" &&
