@@ -7,6 +7,7 @@
     club: null,
     dog: null,
     photoUrl: "",
+    bookingOptions: null,
   };
   const byId = (id) => document.getElementById(id);
   const views = [
@@ -15,6 +16,7 @@
     "dog-view",
     "profile-view",
     "edit-view",
+    "booking-view",
   ];
 
   function platform() {
@@ -162,6 +164,101 @@
       timeZone: "Europe/London",
     }).format(new Date(value));
   }
+  function localDateInput(date = new Date()) {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      timeZone: "Europe/London",
+    }).formatToParts(date);
+    const part = (type) => parts.find((item) => item.type === type).value;
+    return `${part("year")}-${part("month")}-${part("day")}`;
+  }
+  function selectedBookingDog() {
+    return state.bookingOptions?.dogs.find(
+      (dog) => dog.id === byId("booking-dog").value,
+    );
+  }
+  function selectedBookingService() {
+    return state.bookingOptions?.services.find(
+      (service) => service.id === byId("booking-service").value,
+    );
+  }
+  function clearBookingSlots() {
+    byId("booking-slots").replaceChildren();
+    byId("booking-slot-empty").textContent =
+      "Choose Find available times to see appointments.";
+  }
+  function updateBookingSummary() {
+    const dog = selectedBookingDog();
+    const service = selectedBookingService();
+    const membership = state.bookingOptions?.membership;
+    const canUseCredit = Boolean(
+      dog?.canUseMembershipCredits &&
+      service?.membershipCreditEligible &&
+      membership?.benefitsAvailable &&
+      membership.remainingGroomingCredits >= service.membershipCreditCost,
+    );
+    byId("booking-price").textContent = service
+      ? `£${(service.pricePence / 100).toFixed(2)} · ${service.durationMinutes} minutes`
+      : "";
+    byId("booking-terms").textContent = service?.cancellationTerms ?? "";
+    const creditChoice = byId("booking-credit-choice");
+    creditChoice.classList.toggle("hidden", !canUseCredit);
+    byId("booking-credit").checked = canUseCredit;
+    byId("booking-credit-copy").textContent = canUseCredit
+      ? `Use ${service.membershipCreditCost} of your ${membership.remainingGroomingCredits} remaining grooming credits`
+      : "";
+    byId("booking-payment-note").textContent = canUseCredit
+      ? "Your selected membership credit covers this booking."
+      : service
+        ? `£${(service.pricePence / 100).toFixed(2)} will be due at the club. No payment is taken in this demo.`
+        : "";
+    clearBookingSlots();
+  }
+  async function openBooking() {
+    const message = byId("booking-message");
+    message.textContent = "";
+    try {
+      const options = await request(
+        `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/booking-options`,
+      );
+      state.bookingOptions = options;
+      const dogSelect = byId("booking-dog");
+      const serviceSelect = byId("booking-service");
+      dogSelect.replaceChildren();
+      serviceSelect.replaceChildren();
+      options.dogs.forEach((dog) => {
+        const option = document.createElement("option");
+        option.value = dog.id;
+        option.textContent = dog.name;
+        dogSelect.append(option);
+      });
+      options.services.forEach((service) => {
+        const option = document.createElement("option");
+        option.value = service.id;
+        option.textContent = service.name;
+        serviceSelect.append(option);
+      });
+      byId("booking-date").min = localDateInput();
+      byId("booking-date").value = localDateInput(
+        new Date(Date.now() + 24 * 60 * 60 * 1000),
+      );
+      byId("booking-setup-empty").textContent = options.dogs.length
+        ? options.services.length
+          ? ""
+          : "This club has no active grooming services."
+        : "No approved dogs are available for grooming bookings.";
+      byId("booking-search").disabled =
+        !options.dogs.length || !options.services.length;
+      byId("booking-terms-accepted").checked = false;
+      updateBookingSummary();
+      show("booking-view");
+    } catch (error) {
+      message.textContent = error.message;
+      show("booking-view");
+    }
+  }
   async function openClub(club) {
     byId("club-message").textContent = "";
     try {
@@ -258,6 +355,7 @@
     state.clubs = [];
     state.club = null;
     state.dog = null;
+    state.bookingOptions = null;
     clearPhoto();
     show("login-view");
     byId("password").value = "";
@@ -298,6 +396,85 @@
     }
   });
   byId("back").addEventListener("click", () => show("club-view"));
+  byId("open-booking").addEventListener("click", openBooking);
+  byId("booking-back").addEventListener("click", () => show("dog-view"));
+  byId("booking-dog").addEventListener("change", updateBookingSummary);
+  byId("booking-service").addEventListener("change", updateBookingSummary);
+  byId("booking-search").addEventListener("click", async () => {
+    const message = byId("booking-message");
+    message.textContent = "";
+    const button = byId("booking-search");
+    button.disabled = true;
+    clearBookingSlots();
+    try {
+      const query = new URLSearchParams({
+        dog: byId("booking-dog").value,
+        service: byId("booking-service").value,
+        date: byId("booking-date").value,
+      });
+      const availability = await request(
+        `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/availability?${query}`,
+      );
+      const slots = byId("booking-slots");
+      availability.slots.forEach((slot, index) => {
+        const label = document.createElement("label");
+        label.className = "slot";
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = "booking-slot";
+        input.value = slot.starts_at;
+        input.required = true;
+        if (index === 0) input.checked = true;
+        const copy = document.createElement("span");
+        copy.textContent = slot.local_time;
+        label.append(input, copy);
+        slots.append(label);
+      });
+      byId("booking-slot-empty").textContent = availability.slots.length
+        ? ""
+        : "No appointments are available on this date.";
+    } catch (error) {
+      message.textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
+  byId("booking-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const message = byId("booking-message");
+    const slot = form.querySelector('input[name="booking-slot"]:checked');
+    message.textContent = "";
+    if (!slot) {
+      message.textContent = "Choose an available appointment time.";
+      return;
+    }
+    setBusy(form, true);
+    try {
+      const useCredit =
+        !byId("booking-credit-choice").classList.contains("hidden") &&
+        byId("booking-credit").checked;
+      await request(
+        `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/bookings`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            dog_id: byId("booking-dog").value,
+            service_id: byId("booking-service").value,
+            starts_at: slot.value,
+            accepted_terms: "yes",
+            ...(useCredit ? { use_membership_credit: "yes" } : {}),
+          }),
+        },
+      );
+      await openClub(state.club);
+      byId("dog-message").textContent = "Grooming booking confirmed.";
+    } catch (error) {
+      message.textContent = error.message;
+    } finally {
+      setBusy(form, false);
+    }
+  });
   byId("profile-back").addEventListener("click", async () => {
     clearPhoto();
     state.dog = null;

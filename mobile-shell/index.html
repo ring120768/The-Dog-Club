@@ -105,6 +105,11 @@
         outline: 3px solid rgb(35 84 72 / 18%);
         border-color: #235448;
       }
+      input[type="checkbox"],
+      input[type="radio"] {
+        width: auto;
+        accent-color: #235448;
+      }
       button {
         border: 0;
         border-radius: 999px;
@@ -239,6 +244,39 @@
         padding-top: 9px;
         border-top: 1px solid rgb(35 84 72 / 12%);
       }
+      .slot-list {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin: 12px 0;
+      }
+      .slot {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        margin: 0;
+        padding: 11px 8px;
+        border: 1px solid #b7c5bf;
+        border-radius: 12px;
+        background: white;
+      }
+      .check-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-weight: 600;
+      }
+      .terms-box {
+        margin: 16px 0;
+        padding: 14px;
+        border-radius: 14px;
+        background: #f5f8f4;
+      }
+      .terms-box p {
+        color: #587069;
+        line-height: 1.45;
+      }
       .profile-photo {
         display: block;
         width: 180px;
@@ -367,10 +405,49 @@
             <h3 id="bookings-heading">Grooming bookings</h3>
             <p id="booking-empty"></p>
             <ol id="booking-list" class="booking-list"></ol>
+            <button id="open-booking" class="primary" type="button">
+              Book a groom
+            </button>
           </section>
         </div>
         <div id="dog-list" class="dog-list"></div>
         <p id="dog-message" class="message" role="alert"></p>
+      </section>
+      <section id="booking-view" class="card hidden">
+        <div class="topline">
+          <button id="booking-back" class="secondary" type="button">
+            Club home
+          </button>
+          <span class="eyebrow">Grooming</span>
+        </div>
+        <h2>Book a groom</h2>
+        <form id="booking-form">
+          <label>Dog<select id="booking-dog" required></select></label>
+          <label>Service<select id="booking-service" required></select></label>
+          <p id="booking-price" class="muted"></p>
+          <label>Date<input id="booking-date" type="date" required /></label>
+          <button id="booking-search" class="secondary" type="button">
+            Find available times
+          </button>
+          <p id="booking-slot-empty" class="muted"></p>
+          <div id="booking-slots" class="slot-list"></div>
+          <label id="booking-credit-choice" class="check-row hidden">
+            <input id="booking-credit" type="checkbox" />
+            <span id="booking-credit-copy"></span>
+          </label>
+          <p id="booking-payment-note" class="muted"></p>
+          <div class="terms-box">
+            <strong>Cancellation terms</strong>
+            <p id="booking-terms"></p>
+            <label class="check-row">
+              <input id="booking-terms-accepted" type="checkbox" required />
+              <span>I accept these cancellation terms.</span>
+            </label>
+          </div>
+          <button class="primary" type="submit">Confirm booking</button>
+        </form>
+        <p id="booking-setup-empty" class="message" role="status"></p>
+        <p id="booking-message" class="message" role="alert"></p>
       </section>
       <section id="profile-view" class="card hidden">
         <div class="topline">
