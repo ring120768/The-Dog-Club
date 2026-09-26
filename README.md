@@ -74,4 +74,4 @@ Platform owners can also download a tenant-bound JSON archive with a record coun
 
 ## iOS and Android
 
-Shared Capacitor projects now live in `ios/` and `android/`. Both debug targets build from the same repository and currently show an explicitly unconnected development shell using the demo dog identity. Run `npm run mobile:sync` after changing bundled assets. Native authentication, profile/photo journeys, push/deep links, signing and store distribution remain the next mobile increments; see [mobile foundation](docs/MOBILE_FOUNDATION.md).
+Shared Capacitor projects now live in `ios/` and `android/`. Both debug targets build from the same repository and bundle the same member journey: server selection for development, opaque bearer-token sign-in, club selection and a tenant-scoped dog list. The bearer token stays in memory and disappears when the app reloads. Run `npm run mobile:sync` after changing bundled assets. Dog detail/photo delivery, secure device persistence, push/deep links, signing and store distribution remain later mobile increments; see [mobile foundation](docs/MOBILE_FOUNDATION.md).
