@@ -27,7 +27,7 @@ test("mobile club view includes membership and booking summaries", async () => {
   assert.match(script, /timeZone:\s*"Europe\/London"/);
 });
 
-test("mobile grooming flow searches live availability and confirms without card collection", async () => {
+test("mobile grooming flow preserves credits and hands card payments to Stripe", async () => {
   const [shell, script] = await Promise.all([
     readFile(new URL("../mobile-shell/index.html", import.meta.url), "utf8"),
     readFile(new URL("../mobile-shell/app.js", import.meta.url), "utf8"),
@@ -35,10 +35,16 @@ test("mobile grooming flow searches live availability and confirms without card 
 
   assert.match(shell, /id="booking-view"/);
   assert.match(shell, /id="booking-terms-accepted"[^>]*required/);
-  assert.match(script, /No payment is taken in this demo/);
+  assert.match(script, /securely with Stripe/);
   assert.match(script, /\/booking-options/);
   assert.match(script, /\/availability\?/);
   assert.match(script, /\/bookings/);
+  assert.match(script, /\/service-checkouts/);
+  assert.match(script, /crypto\.randomUUID\(\)/);
+  assert.match(script, /Plugins\?\.Browser/);
+  assert.match(script, /browserFinished/);
+  assert.match(script, /held for 30 minutes/);
+  assert.match(shell, /id="booking-payment-refresh"/);
   assert.doesNotMatch(shell, /card number|payment details/i);
 });
 

@@ -7,6 +7,7 @@ import { initialise, type Db } from "../src/lib/database";
 import {
   expireServicePaymentHolds,
   prepareServiceCheckout,
+  serviceCheckoutStatusFor,
 } from "../src/lib/service-payments";
 import type {
   StripeEventEnvelope,
@@ -180,6 +181,18 @@ test("service checkout holds capacity and safely reuses the request", async () =
       [first.bookingId],
     )
   ).rows[0];
+  assert.deepEqual(
+    await serviceCheckoutStatusFor(db, "alice", club, first.bookingId),
+    {
+      bookingId: first.bookingId,
+      status: "awaiting_payment",
+      expiresAt: first.expiresAt,
+    },
+  );
+  assert.equal(
+    await serviceCheckoutStatusFor(db, "coast-member", club, first.bookingId),
+    null,
+  );
   await paidEvent(
     "evt_service_paid_one",
     sessions[0],
@@ -193,6 +206,11 @@ test("service checkout holds capacity and safely reuses the request", async () =
         [first.bookingId],
       )
     ).rows[0].status,
+    "confirmed",
+  );
+  assert.equal(
+    (await serviceCheckoutStatusFor(db, "alice", club, first.bookingId))
+      ?.status,
     "confirmed",
   );
   assert.deepEqual(
@@ -279,6 +297,11 @@ test("late payment is isolated for manual reconciliation", async () => {
     ),
     1,
   );
+  assert.equal(
+    (await serviceCheckoutStatusFor(db, "alice", club, attempt.bookingId))
+      ?.status,
+    "expired",
+  );
   await paidEvent(
     "evt_service_late_paid",
     sessions[2],
@@ -292,6 +315,11 @@ test("late payment is isolated for manual reconciliation", async () => {
         [attempt.bookingId],
       )
     ).rows[0].status,
+    "late_paid",
+  );
+  assert.equal(
+    (await serviceCheckoutStatusFor(db, "alice", club, attempt.bookingId))
+      ?.status,
     "late_paid",
   );
   assert.equal(

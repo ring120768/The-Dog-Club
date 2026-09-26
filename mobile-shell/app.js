@@ -9,6 +9,8 @@
     photoUrl: "",
     bookingOptions: null,
     rescheduleBooking: null,
+    checkoutRequestId: null,
+    pendingCheckout: null,
   };
   const byId = (id) => document.getElementById(id);
   const views = [
@@ -224,6 +226,11 @@
     byId("booking-slot-empty").textContent =
       "Choose Find available times to see appointments.";
   }
+  function resetCheckoutAttempt() {
+    state.checkoutRequestId = null;
+    state.pendingCheckout = null;
+    byId("booking-payment-refresh").classList.add("hidden");
+  }
   function updateBookingSummary() {
     const dog = selectedBookingDog();
     const service = selectedBookingService();
@@ -258,7 +265,7 @@
       : canUseCredit
         ? "Your selected membership credit covers this booking."
         : service
-          ? `£${(service.pricePence / 100).toFixed(2)} will be due at the club. No payment is taken in this demo.`
+          ? `Pay £${(service.pricePence / 100).toFixed(2)} securely with Stripe to confirm this appointment.`
           : "";
     clearBookingSlots();
   }
@@ -272,6 +279,7 @@
     const message = byId("booking-message");
     message.textContent = "";
     state.rescheduleBooking = booking;
+    resetCheckoutAttempt();
     try {
       const options = await request(
         `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/booking-options`,
@@ -369,6 +377,61 @@
       byId("club-message").textContent = error.message;
     }
   }
+  async function refreshCheckoutStatus() {
+    if (!state.pendingCheckout) return;
+    const message = byId("booking-message");
+    const refresh = byId("booking-payment-refresh");
+    refresh.disabled = true;
+    try {
+      const result = await request(
+        `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/service-checkouts/${encodeURIComponent(state.pendingCheckout.bookingId)}`,
+      );
+      if (result.status === "confirmed") {
+        state.pendingCheckout = null;
+        state.checkoutRequestId = null;
+        refresh.classList.add("hidden");
+        await openClub(state.club);
+        byId("dog-message").textContent =
+          "Payment received. Grooming booking confirmed.";
+      } else if (result.status === "late_paid") {
+        message.textContent =
+          "Payment arrived after the appointment hold expired. The club team will contact you.";
+      } else if (result.status === "failed") {
+        resetCheckoutAttempt();
+        message.textContent =
+          "Payment was unsuccessful and the appointment hold has been released.";
+      } else if (result.status === "expired") {
+        resetCheckoutAttempt();
+        message.textContent =
+          "The 30-minute appointment hold expired. Please choose a new time.";
+      } else {
+        message.textContent =
+          "Payment is still processing. Refresh again in a moment.";
+      }
+    } catch (error) {
+      message.textContent = error.message;
+    } finally {
+      refresh.disabled = false;
+    }
+  }
+  async function openHostedCheckout(url) {
+    const browser = window.Capacitor?.Plugins?.Browser;
+    if (!browser?.open) {
+      window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    let listener;
+    listener = await browser.addListener("browserFinished", async () => {
+      await listener?.remove();
+      await refreshCheckoutStatus();
+    });
+    try {
+      await browser.open({ url, toolbarColor: "#235448" });
+    } catch (error) {
+      await listener.remove();
+      throw error;
+    }
+  }
   async function openDog(dogId) {
     const message = byId("profile-message");
     message.textContent = "";
@@ -421,6 +484,8 @@
     state.dog = null;
     state.bookingOptions = null;
     state.rescheduleBooking = null;
+    state.checkoutRequestId = null;
+    state.pendingCheckout = null;
     clearPhoto();
     show("login-view");
     byId("password").value = "";
@@ -466,8 +531,20 @@
     state.rescheduleBooking = null;
     show("dog-view");
   });
-  byId("booking-dog").addEventListener("change", updateBookingSummary);
-  byId("booking-service").addEventListener("change", updateBookingSummary);
+  byId("booking-dog").addEventListener("change", () => {
+    resetCheckoutAttempt();
+    updateBookingSummary();
+  });
+  byId("booking-service").addEventListener("change", () => {
+    resetCheckoutAttempt();
+    updateBookingSummary();
+  });
+  byId("booking-date").addEventListener("change", resetCheckoutAttempt);
+  byId("booking-slots").addEventListener("change", resetCheckoutAttempt);
+  byId("booking-payment-refresh").addEventListener(
+    "click",
+    refreshCheckoutStatus,
+  );
   byId("booking-search").addEventListener("click", async () => {
     const message = byId("booking-message");
     message.textContent = "";
@@ -525,6 +602,31 @@
       const useCredit =
         !byId("booking-credit-choice").classList.contains("hidden") &&
         byId("booking-credit").checked;
+      if (!rescheduling && !useCredit) {
+        state.checkoutRequestId ??= crypto.randomUUID();
+        const checkout = await request(
+          `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/service-checkouts`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              request_id: state.checkoutRequestId,
+              dog_id: byId("booking-dog").value,
+              service_id: byId("booking-service").value,
+              starts_at: slot.value,
+              accepted_terms: "yes",
+            }),
+          },
+        );
+        state.pendingCheckout = {
+          bookingId: checkout.bookingId,
+          expiresAt: checkout.expiresAt,
+        };
+        byId("booking-payment-refresh").classList.remove("hidden");
+        message.textContent =
+          "Your appointment is held for 30 minutes while payment completes.";
+        await openHostedCheckout(checkout.checkoutUrl);
+        return;
+      }
       const path = rescheduling
         ? `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/bookings/${encodeURIComponent(rescheduling.id)}`
         : `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/bookings`;
@@ -538,7 +640,7 @@
                 service_id: byId("booking-service").value,
                 starts_at: slot.value,
                 accepted_terms: "yes",
-                ...(useCredit ? { use_membership_credit: "yes" } : {}),
+                use_membership_credit: "yes",
               },
         ),
       });

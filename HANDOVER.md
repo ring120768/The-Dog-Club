@@ -306,3 +306,13 @@ Signed webhook events now route to the service-payment lifecycle before the exis
 The provider/session, payment and exception tables use forced RLS with no restricted-client grants. Operator archive schema v2 includes the financial ledger and exceptions, removes hosted Checkout URLs and continues to omit raw webhook payloads. TypeScript and all 123 isolated tests pass; new coverage proves safe retry, capacity exclusion, tenant denial, paid confirmation, failed/expired release, late-payment quarantine and amount mismatch rejection. Supabase's local security advisor reported only the pre-existing mutable `public.set_updated_at` search-path warning. Production and real Stripe accounts remain untouched.
 
 Next: add the bearer-authorised mobile checkout route and native system-browser handoff/status refresh. Then run a real Stripe sandbox Checkout plus signed webhook sequence against reviewed HTTPS non-production infrastructure before describing service payment as connected.
+
+## Mobile grooming Checkout checkpoint — 26/09/2026
+
+Branch `codex/mobile-service-checkout-ui`, stacked on `codex/mobile-service-checkout`. Non-credit mobile grooming confirmation now calls a bearer-authorised service-Checkout endpoint, which creates or safely reuses the 30-minute booking hold and returns the Stripe-hosted URL. Credit-covered bookings continue through the existing immediate-confirmation route. The client preserves a UUID request key across retry, opens Checkout using Capacitor Browser 8.0.4 and keeps a manual status-refresh control for web fallback or delayed webhook delivery.
+
+Closing the native browser reads a separate authenticated status projection. It reports awaiting payment, confirmed, failed, expired or late-paid follow-up without exposing provider account, Checkout Session, PaymentIntent or hosted URL data. The return itself never confirms a booking; only the existing signed webhook path does that. Status access requires the initiating account's live club membership and exact club/booking relationship.
+
+Validation: TypeScript, all 123 isolated tests, Capacitor synchronisation, Android debug assembly with Java 21 and the unsigned iOS simulator build pass. Focused coverage includes request reuse, tenant denial and pending/confirmed/expired/late status projection. `npm audit` reports zero vulnerabilities. This checkpoint has not run a real Stripe sandbox Checkout or a visual device journey, and production remains untouched.
+
+Next: run a real Stripe sandbox Checkout and signed webhook sequence against reviewed HTTPS non-production infrastructure. Add Universal Links/App Links plus the HTTPS fallback before treating return-to-app as release-ready; automatic refunds and café POS remain later policy-led slices.

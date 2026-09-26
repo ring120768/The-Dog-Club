@@ -212,6 +212,58 @@ export async function prepareServiceCheckout(
   };
 }
 
+export type ServiceCheckoutStatus = {
+  bookingId: string;
+  status: "awaiting_payment" | "confirmed" | "failed" | "expired" | "late_paid";
+  expiresAt: Date;
+};
+
+export async function serviceCheckoutStatusFor(
+  db: Db,
+  actor: string,
+  club: string,
+  booking: string,
+): Promise<ServiceCheckoutStatus | null> {
+  if (!z.uuid().safeParse(booking).success) return null;
+  // These tables deliberately have no client grants. The server query therefore
+  // applies the account and club boundary explicitly instead of assuming RLS.
+  const checkout = (
+    await db.query<{
+      booking_id: string;
+      checkout_status: ServiceCheckout["status"];
+      booking_status: GroomingBooking["status"];
+      expires_at: string;
+    }>(
+      `SELECT c.booking_id,c.status AS checkout_status,b.status AS booking_status,c.expires_at
+       FROM service_checkout_sessions c
+       JOIN grooming_bookings b ON b.club_id=c.club_id AND b.id=c.booking_id
+       JOIN memberships m ON m.club_id=c.club_id AND m.account_id=$1
+       WHERE c.club_id=$2 AND c.booking_id=$3 AND c.account_id=$1`,
+      [actor, club, booking],
+    )
+  ).rows[0];
+  if (!checkout) return null;
+  const expiresAt = new Date(checkout.expires_at);
+  let status: ServiceCheckoutStatus["status"];
+  if (
+    ["creating", "open", "awaiting_payment"].includes(
+      checkout.checkout_status,
+    ) &&
+    expiresAt.getTime() <= Date.now()
+  )
+    status = "expired";
+  else if (
+    checkout.checkout_status === "completed" ||
+    checkout.booking_status === "confirmed"
+  )
+    status = "confirmed";
+  else if (checkout.checkout_status === "late_paid") status = "late_paid";
+  else if (checkout.checkout_status === "failed") status = "failed";
+  else if (checkout.checkout_status === "expired") status = "expired";
+  else status = "awaiting_payment";
+  return { bookingId: checkout.booking_id, status, expiresAt };
+}
+
 export async function applyServiceCheckoutEvent(
   tx: Queryable,
   providerAccount: string,
