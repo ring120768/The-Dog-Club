@@ -28,6 +28,6 @@ A plan costs £39 per month and includes two grooming credits for 01/10/2099–0
 
 ## Deferred
 
-The Stripe sandbox contract is documented in `STRIPE_MEMBERSHIP_CHECKOUT.md`. Production Connect onboarding, Customer Portal, emailed receipts, refunds, proration, confirmed VAT treatment, household adults and applying a grooming credit to a booking price remain later work. Demo assignment must continue to say that it takes no payment.
+The Stripe sandbox contract is documented in `STRIPE_MEMBERSHIP_CHECKOUT.md`. Grooming bookings can redeem and restore configured credit costs atomically, while still showing the listed price and £0 amount due. Production Connect onboarding, Customer Portal, emailed receipts, refunds, proration, confirmed VAT treatment, household adults and part-credit/cash combinations remain later work. Demo assignment must continue to say that it takes no payment.
 
 The account temporarily represents the membership holder until the household model is implemented. The migration remains local until reviewed and exercised against non-production PostgreSQL. Production is unchanged.

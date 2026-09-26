@@ -11,6 +11,8 @@ export type GroomingService = {
   cleanup_minutes: number;
   price_pence: number;
   cancellation_terms: string;
+  membership_credit_eligible: boolean;
+  membership_credit_cost: number;
   active: boolean;
 };
 
@@ -26,6 +28,9 @@ export type GroomingBooking = {
   busy_ends_at: string;
   status: "confirmed" | "cancelled";
   price_pence_snapshot: number;
+  amount_due_pence_snapshot: number;
+  membership_subscription_id: string | null;
+  grooming_credits_applied: number;
   cancellation_terms_snapshot: string;
   cancellation_reason: string;
   version: number;
@@ -84,6 +89,13 @@ export async function createBookingSetup(
       duration_minutes: z.coerce.number().int().min(15).max(480),
       cleanup_minutes: z.coerce.number().int().min(0).max(120),
       price_pounds: z.string().regex(/^\d{1,5}(\.\d{1,2})?$/),
+      membership_credit_eligible: z.enum(["yes", "no"]).default("yes"),
+      membership_credit_cost: z.coerce
+        .number()
+        .int()
+        .min(1)
+        .max(100)
+        .default(1),
       cancellation_terms: z.string().trim().min(1).max(1000),
       date: dateInput,
       starts_at: timeInput,
@@ -120,7 +132,8 @@ export async function createBookingSetup(
     const resourceId = randomUUID();
     const shiftId = randomUUID();
     await tx.query(
-      "INSERT INTO grooming_services(id,club_id,name,duration_minutes,cleanup_minutes,price_pence,cancellation_terms) VALUES($1,$2,$3,$4,$5,$6,$7)",
+      `INSERT INTO grooming_services(id,club_id,name,duration_minutes,cleanup_minutes,price_pence,cancellation_terms,
+       membership_credit_eligible,membership_credit_cost) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
       [
         serviceId,
         club,
@@ -129,6 +142,8 @@ export async function createBookingSetup(
         data.cleanup_minutes,
         pricePence,
         data.cancellation_terms,
+        data.membership_credit_eligible === "yes",
+        data.membership_credit_cost,
       ],
     );
     await tx.query(
@@ -311,6 +326,7 @@ export async function reserveBooking(
       service_id: z.uuid(),
       starts_at: z.coerce.date(),
       accepted_terms: z.literal("yes"),
+      use_membership_credit: z.literal("yes").optional(),
     })
     .parse(input);
   if (data.starts_at <= new Date())
@@ -386,9 +402,66 @@ export async function reserveBooking(
         "That slot has just become unavailable. Choose another time.",
       );
     const id = randomUUID();
+    let membershipSubscriptionId: string | null = null;
+    let groomingCreditsApplied = 0;
+    if (data.use_membership_credit) {
+      if (!service.membership_credit_eligible)
+        throw new OnboardingError(
+          "This service cannot be booked with grooming credits.",
+        );
+      const subscription = (
+        await tx.query<{
+          id: string;
+          state: string;
+          payment_issue_benefits: boolean;
+        }>(
+          `SELECT s.id,s.state,p.payment_issue_benefits
+           FROM member_subscriptions s JOIN membership_plans p ON p.club_id=s.club_id AND p.id=s.plan_id
+           WHERE s.club_id=$1 AND s.account_id=$2 AND s.state<>'ended' FOR UPDATE OF s`,
+          [club, actor],
+        )
+      ).rows[0];
+      const benefitsAvailable =
+        subscription &&
+        (subscription.state === "active" ||
+          subscription.state === "cancellation_scheduled" ||
+          (subscription.state === "payment_issue" &&
+            subscription.payment_issue_benefits));
+      if (!subscription || !benefitsAvailable)
+        throw new OnboardingError(
+          "Grooming credits are unavailable for this membership.",
+        );
+      const balance = Number(
+        (
+          await tx.query<{ balance: number }>(
+            `SELECT COALESCE(sum(delta),0)::int AS balance FROM benefit_ledger
+             WHERE club_id=$1 AND subscription_id=$2 AND benefit_code='grooming_credit'`,
+            [club, subscription.id],
+          )
+        ).rows[0].balance,
+      );
+      if (balance < service.membership_credit_cost)
+        throw new OnboardingError("Not enough grooming credits remain.");
+      membershipSubscriptionId = subscription.id;
+      groomingCreditsApplied = service.membership_credit_cost;
+      await tx.query(
+        `INSERT INTO benefit_ledger(id,club_id,subscription_id,benefit_code,delta,entry_type,reason,actor_id,idempotency_key)
+         VALUES($1,$2,$3,'grooming_credit',$4,'redemption',$5,$6,$7)`,
+        [
+          randomUUID(),
+          club,
+          subscription.id,
+          -groomingCreditsApplied,
+          `Applied to grooming booking ${id}`,
+          actor,
+          `booking:${id}:grooming-credit`,
+        ],
+      );
+    }
     await tx.query(
-      `INSERT INTO grooming_bookings(id,club_id,dog_id,service_id,resource_id,staff_id,starts_at,service_ends_at,busy_ends_at,price_pence_snapshot,cancellation_terms_snapshot,created_by)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      `INSERT INTO grooming_bookings(id,club_id,dog_id,service_id,resource_id,staff_id,starts_at,service_ends_at,busy_ends_at,
+       price_pence_snapshot,amount_due_pence_snapshot,membership_subscription_id,grooming_credits_applied,cancellation_terms_snapshot,created_by)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
       [
         id,
         club,
@@ -400,6 +473,9 @@ export async function reserveBooking(
         serviceEnds.toISOString(),
         busyEnds.toISOString(),
         service.price_pence,
+        groomingCreditsApplied ? 0 : service.price_pence,
+        membershipSubscriptionId,
+        groomingCreditsApplied,
         service.cancellation_terms,
         actor,
       ],
@@ -461,6 +537,25 @@ export async function cancelBooking(
       throw new OnboardingError(
         "This visit has started. Ask the club team for help.",
       );
+    if (item.membership_subscription_id && item.grooming_credits_applied > 0) {
+      await tx.query(
+        "SELECT id FROM member_subscriptions WHERE club_id=$1 AND id=$2 FOR UPDATE",
+        [club, item.membership_subscription_id],
+      );
+      await tx.query(
+        `INSERT INTO benefit_ledger(id,club_id,subscription_id,benefit_code,delta,entry_type,reason,actor_id,idempotency_key)
+         VALUES($1,$2,$3,'grooming_credit',$4,'restoration',$5,$6,$7) ON CONFLICT DO NOTHING`,
+        [
+          randomUUID(),
+          club,
+          item.membership_subscription_id,
+          item.grooming_credits_applied,
+          `Restored after cancellation of grooming booking ${booking}`,
+          actor,
+          `booking:${booking}:grooming-credit:restore`,
+        ],
+      );
+    }
     await tx.query(
       "UPDATE grooming_bookings SET status='cancelled',cancelled_by=$1,cancellation_reason=$2,cancelled_at=now(),version=version+1 WHERE club_id=$3 AND id=$4",
       [actor, cancellationReason, club, booking],

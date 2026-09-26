@@ -104,6 +104,9 @@ test("confirmed booking snapshots price and blocks staff and station conflicts",
   assert.equal(mine.length, 1);
   assert.equal(mine[0].id, booking);
   assert.equal(mine[0].price_pence_snapshot, 6500);
+  assert.equal(mine[0].amount_due_pence_snapshot, 6500);
+  assert.equal(mine[0].grooming_credits_applied, 0);
+  assert.equal(mine[0].membership_subscription_id, null);
   assert.match(mine[0].cancellation_terms_snapshot, /24 hours/);
   const afterBooking = await availabilityFor(
     db,

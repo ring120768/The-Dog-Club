@@ -95,6 +95,26 @@ export function BookingSetupForm({
             defaultValue="Cancel at least 24 hours before the appointment."
           />
         </label>
+        <div className="field-pair">
+          <label>
+            Membership credit use
+            <select name="membership_credit_eligible" defaultValue="yes">
+              <option value="yes">Allowed</option>
+              <option value="no">Not allowed</option>
+            </select>
+          </label>
+          <label>
+            Credits needed
+            <input
+              name="membership_credit_cost"
+              type="number"
+              min={1}
+              max={100}
+              defaultValue={1}
+              required
+            />
+          </label>
+        </div>
         <label>
           Grooming station
           <input
@@ -223,6 +243,9 @@ export function BookingSlotForm({
   localTime,
   pricePence,
   terms,
+  availableCredits,
+  creditCost,
+  creditEligible,
 }: {
   club: string;
   slug: string;
@@ -232,6 +255,9 @@ export function BookingSlotForm({
   localTime: string;
   pricePence: number;
   terms: string;
+  availableCredits: number;
+  creditCost: number;
+  creditEligible: boolean;
 }) {
   const [state, action, pending] = useActionState(
     reserveBookingAction.bind(null, club, slug, dog, service, startsAt),
@@ -250,6 +276,23 @@ export function BookingSlotForm({
         <input type="checkbox" name="accepted_terms" value="yes" required />
         <span>I agree to: {terms}</span>
       </label>
+      {creditEligible && availableCredits >= creditCost && (
+        <label className="terms-check membership-credit-check">
+          <input type="checkbox" name="use_membership_credit" value="yes" />
+          <span>
+            Use {creditCost} grooming {creditCost === 1 ? "credit" : "credits"}{" "}
+            — £0 due. Restored if cancelled before the visit starts.
+          </span>
+        </label>
+      )}
+      {creditEligible &&
+        availableCredits > 0 &&
+        availableCredits < creditCost && (
+          <small>
+            This service needs {creditCost} credits; you have {availableCredits}
+            .
+          </small>
+        )}
       <Result state={state} />
       <button className="button" disabled={pending}>
         {pending ? "Confirming…" : "Confirm booking"}

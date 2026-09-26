@@ -12,6 +12,7 @@ import { OnboardingError } from "@/lib/onboarding";
 import { BookingSlotForm, CancelBookingForm } from "@/components/booking-forms";
 import { visitsFor } from "@/lib/visits";
 import { visitLabels } from "@/lib/visit-contract";
+import { subscriptionsFor } from "@/lib/memberships";
 
 const londonDate = () => {
   const parts = new Intl.DateTimeFormat("en-GB", {
@@ -43,6 +44,7 @@ export default async function BookingsPage({
     service?: string;
     date?: string;
     booked?: string;
+    credit?: string;
     cancelled?: string;
   }>;
 }) {
@@ -59,12 +61,26 @@ export default async function BookingsPage({
   const services = await activeServices(db, account.id, club.id);
   const bookings = await bookingsFor(db, account.id, club.id);
   const visitData = await visitsFor(db, account.id, club.id);
+  const membershipData = await subscriptionsFor(db, account.id, club.id);
   const query = await searchParams;
   const selectedDog = dogs.find((dog) => dog.id === query.dog);
   const selectedService = services.find(
     (service) => service.id === query.service,
   );
   const selectedDate = query.date ?? londonDate();
+  const currentMembership = membershipData.subscriptions.find(
+    (subscription) => subscription.state !== "ended",
+  );
+  const benefitsAvailable = Boolean(
+    currentMembership &&
+    (currentMembership.state === "active" ||
+      currentMembership.state === "cancellation_scheduled" ||
+      (currentMembership.state === "payment_issue" &&
+        currentMembership.payment_issue_benefits)),
+  );
+  const availableCredits = benefitsAvailable
+    ? currentMembership!.remaining_grooming_credits
+    : 0;
   let availability:
     | {
         service: GroomingService;
@@ -93,7 +109,9 @@ export default async function BookingsPage({
     <main className="club-main booking-page">
       {query.booked && (
         <p className="success" role="status">
-          Grooming booking confirmed. No payment has been taken.
+          {query.credit
+            ? "Grooming booking confirmed and membership credit applied. No card payment is due."
+            : "Grooming booking confirmed. No payment has been taken."}
         </p>
       )}
       {query.cancelled && (
@@ -104,8 +122,8 @@ export default async function BookingsPage({
       <span className="eyebrow">A LITTLE TIME FOR THEM</span>
       <h1>Book a groom.</h1>
       <p className="intro">
-        Times include the service and clean-up buffer. Payment is not collected
-        in this demo.
+        Times include the service and clean-up buffer. Eligible members can use
+        grooming credits; card payment is not collected in this demo.
       </p>
       <form method="get" className="booking-search booking-panel">
         <label>
@@ -176,6 +194,11 @@ export default async function BookingsPage({
                 localTime={slot.local_time}
                 pricePence={availability!.service.price_pence}
                 terms={availability!.service.cancellation_terms}
+                availableCredits={availableCredits}
+                creditCost={availability!.service.membership_credit_cost}
+                creditEligible={
+                  availability!.service.membership_credit_eligible
+                }
               />
             ))}
           </div>
@@ -204,9 +227,25 @@ export default async function BookingsPage({
                   {booking.dog_name} · {booking.service_name}
                 </h3>
                 <p>
-                  {bookingDate(booking.starts_at)} · £
-                  {(booking.price_pence_snapshot / 100).toFixed(2)}
+                  {bookingDate(booking.starts_at)} ·{" "}
+                  {booking.grooming_credits_applied > 0 ? (
+                    <>
+                      {booking.grooming_credits_applied} grooming{" "}
+                      {booking.grooming_credits_applied === 1
+                        ? "credit"
+                        : "credits"}{" "}
+                      · £0 due
+                    </>
+                  ) : (
+                    <>£{(booking.amount_due_pence_snapshot / 100).toFixed(2)}</>
+                  )}
                 </p>
+                {booking.grooming_credits_applied > 0 && (
+                  <small>
+                    Listed price: £
+                    {(booking.price_pence_snapshot / 100).toFixed(2)}
+                  </small>
+                )}
                 <small>{booking.cancellation_terms_snapshot}</small>
                 {booking.cancellation_reason && (
                   <small>Reason: {booking.cancellation_reason}</small>
