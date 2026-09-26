@@ -15,6 +15,18 @@ async function authorised(
   kind: string,
   club: string | null,
 ) {
+  if (kind === "staff") {
+    const access = await tx.query(
+      `SELECT 1 FROM memberships m LEFT JOIN staff_members s ON s.club_id=m.club_id AND s.account_id=m.account_id
+      WHERE m.account_id=$1 AND m.club_id=$2 AND (m.role='manager' OR (s.active AND s.can_manage_staff))`,
+      [actor, club],
+    );
+    if (!access.rows.length)
+      throw new OnboardingError(
+        "You do not have permission for this invitation.",
+      );
+    return;
+  }
   const result =
     kind === "operator"
       ? await tx.query("SELECT 1 FROM platform_owners WHERE account_id=$1", [
@@ -29,17 +41,27 @@ async function authorised(
       "You do not have permission for this invitation.",
     );
 }
+const staffInviteInput = z.object({
+  managerEmail: emailInput,
+  role: z.enum(["manager", "groomer", "reception", "cafe"]),
+  can_manage_staff: z.boolean().default(false),
+  can_manage_booking_setup: z.boolean().default(false),
+  service_ids: z.array(z.uuid()).max(100).default([]),
+});
 export async function issueInvite(
   db: Db,
   actor: string,
-  kind: "operator" | "member",
+  kind: "operator" | "member" | "staff",
   input: unknown,
   club: string | null = null,
 ) {
+  const staffData = kind === "staff" ? staffInviteInput.parse(input) : null;
   const data =
     kind === "operator"
       ? onboardingInput.parse(input)
-      : z.object({ managerEmail: emailInput }).parse(input);
+      : staffData
+        ? staffData
+        : z.object({ managerEmail: emailInput }).parse(input);
   const token = randomBytes(32).toString("hex");
   await db.transaction(async (tx) => {
     await authorised(tx, actor, kind, club);
@@ -51,8 +73,29 @@ export async function issueInvite(
       throw new OnboardingError(
         "Revoke unused invitations before issuing more.",
       );
+    if (staffData) {
+      const coreManager = await tx.query(
+        `SELECT 1 FROM accounts a JOIN memberships m ON m.account_id=a.id
+         WHERE a.email=$1 AND m.club_id=$2 AND m.role='manager'`,
+        [staffData.managerEmail, club],
+      );
+      if (coreManager.rows.length)
+        throw new OnboardingError(
+          "Core managers already have full club administration.",
+        );
+    }
+    if (staffData?.service_ids.length) {
+      const valid = await tx.query<{ id: string }>(
+        "SELECT id FROM grooming_services WHERE club_id=$1 AND id=ANY($2::uuid[])",
+        [club, [...new Set(staffData.service_ids)]],
+      );
+      if (valid.rows.length !== new Set(staffData.service_ids).size)
+        throw new OnboardingError(
+          "One or more service qualifications are unavailable.",
+        );
+    }
     await tx.query(
-      "INSERT INTO onboarding_invites(id,token_hash,email,kind,club_id,branding,created_by,expires_at) VALUES($1,$2,$3,$4,$5,$6,$7,now()+interval '72 hours')",
+      "INSERT INTO onboarding_invites(id,token_hash,email,kind,club_id,branding,staff_config,created_by,expires_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,now()+interval '72 hours')",
       [
         randomUUID(),
         tokenHash(token),
@@ -60,6 +103,7 @@ export async function issueInvite(
         kind,
         club,
         kind === "operator" ? JSON.stringify(data) : null,
+        kind === "staff" ? JSON.stringify(data) : null,
         actor,
       ],
     );
@@ -105,6 +149,7 @@ export async function acceptInvite(
         kind: string;
         club_id: string | null;
         branding: Record<string, string>;
+        staff_config: unknown;
         created_by: string;
       }>(
         "SELECT * FROM onboarding_invites WHERE token_hash=$1 AND expires_at>now() AND accepted_at IS NULL AND revoked_at IS NULL FOR UPDATE",
@@ -189,6 +234,47 @@ export async function acceptInvite(
         "INSERT INTO memberships(club_id,account_id,role) VALUES($1,$2,'member') ON CONFLICT DO NOTHING",
         [club, id],
       );
+      if (invite.kind === "staff") {
+        const staff = staffInviteInput.parse(invite.staff_config);
+        await tx.query(
+          `INSERT INTO staff_members(club_id,account_id,role,active,can_manage_staff,can_manage_booking_setup,deactivated_at)
+          VALUES($1,$2,$3,true,$4,$5,NULL) ON CONFLICT(club_id,account_id) DO UPDATE SET role=excluded.role,active=true,
+          can_manage_staff=excluded.can_manage_staff,can_manage_booking_setup=excluded.can_manage_booking_setup,deactivated_at=NULL,updated_at=now()`,
+          [
+            club,
+            id,
+            staff.role,
+            staff.can_manage_staff,
+            staff.can_manage_booking_setup,
+          ],
+        );
+        await tx.query(
+          "DELETE FROM staff_service_qualifications WHERE club_id=$1 AND account_id=$2",
+          [club, id],
+        );
+        for (const service of [...new Set(staff.service_ids)])
+          await tx.query(
+            "INSERT INTO staff_service_qualifications(club_id,account_id,service_id) VALUES($1,$2,$3)",
+            [club, id, service],
+          );
+        await tx.query(
+          "INSERT INTO staff_access_events(club_id,staff_account_id,actor_id,action,details) VALUES($1,$2,$3,'staff.assigned',$4)",
+          [
+            club,
+            id,
+            invite.created_by,
+            JSON.stringify({
+              invitation: invite.id,
+              role: staff.role,
+              permissions: {
+                manageStaff: staff.can_manage_staff,
+                manageBookingSetup: staff.can_manage_booking_setup,
+              },
+              serviceIds: staff.service_ids,
+            }),
+          ],
+        );
+      }
     }
     await tx.query(
       "UPDATE onboarding_invites SET accepted_at=now() WHERE id=$1",
@@ -200,7 +286,7 @@ export async function acceptInvite(
 export async function listInvites(
   db: Db,
   actor: string,
-  kind: "operator" | "member",
+  kind: "operator" | "member" | "staff",
   club: string | null = null,
 ) {
   return db.transaction(async (tx) => {

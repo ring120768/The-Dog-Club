@@ -27,14 +27,24 @@ function errorState(error: unknown): OnboardingState {
   };
 }
 export async function inviteAction(
-  kind: "operator" | "member",
+  kind: "operator" | "member" | "staff",
   club: string | null,
   _state: OnboardingState,
   form: FormData,
 ): Promise<OnboardingState> {
   const a = await requireAccount();
   try {
-    const input = Object.fromEntries(form);
+    const input =
+      kind === "staff"
+        ? {
+            managerEmail: form.get("managerEmail"),
+            role: form.get("role"),
+            can_manage_staff: form.get("can_manage_staff") === "yes",
+            can_manage_booking_setup:
+              form.get("can_manage_booking_setup") === "yes",
+            service_ids: form.getAll("service_ids"),
+          }
+        : Object.fromEntries(form);
     const token = await issueInvite(
       await database(),
       a.id,
@@ -46,6 +56,7 @@ export async function inviteAction(
     );
     revalidatePath("/platform/invitations");
     revalidatePath("/club/[slug]/invitations", "page");
+    revalidatePath("/club/[slug]/staff", "page");
     return { token };
   } catch (e) {
     return errorState(e);
@@ -83,6 +94,7 @@ export async function revokeAction(id: string) {
   await revokeInvite(await database(), a.id, id);
   revalidatePath("/platform/invitations");
   revalidatePath("/club/[slug]/invitations", "page");
+  revalidatePath("/club/[slug]/staff", "page");
 }
 export async function applicationAction(
   club: string,
