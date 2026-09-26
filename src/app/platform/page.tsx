@@ -4,6 +4,7 @@ import { database } from "@/lib/database";
 import { platformClubs } from "@/lib/branding";
 import { operatorReadinessForPlatform } from "@/lib/operator-readiness";
 import { ClubMark } from "@/components/club-mark";
+import { operatorStatePolicy } from "@/lib/operator-lifecycle-contract";
 export default async function PlatformHome() {
   const account = await requireAccount();
   const db = await database();
@@ -51,6 +52,9 @@ export default async function PlatformHome() {
                 <h2>{club.name}</h2>
                 <p>{club.location}</p>
                 <small>/club/{club.slug}</small>
+                <span className={`operator-state state-${club.operator_state}`}>
+                  {operatorStatePolicy[club.operator_state].label}
+                </span>
                 <span
                   className={`readiness-status ${progress.ready ? "ready" : "setup"}`}
                 >

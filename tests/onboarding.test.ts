@@ -14,6 +14,8 @@ import {
   applicationsFor,
 } from "../src/lib/applications";
 import { clubsFor, saveDog, publicDog } from "../src/lib/dogs";
+import { createBookingSetup } from "../src/lib/bookings";
+import { changeOperatorState } from "../src/lib/operator-lifecycle";
 let db: Db;
 const password = "SyntheticPassword-Only26";
 const brand = {
@@ -43,6 +45,26 @@ test("new operator and member join, dog is submitted, manager approves, owner se
   assert.equal(clubs[0].role, "manager");
   club = clubs[0].id;
   assert.deepEqual(await clubsFor(db, "platform-owner"), []);
+  await createBookingSetup(db, operator, club, {
+    service_name: "Test groom",
+    resource_name: "Test station",
+    duration_minutes: 60,
+    cleanup_minutes: 15,
+    price_pounds: "45.00",
+    membership_credit_eligible: "no",
+    membership_credit_cost: 1,
+    cancellation_terms: "Cancel at least 24 hours before.",
+    date: "2099-10-01",
+    starts_at: "09:00",
+    ends_at: "17:00",
+    break_starts_at: "12:00",
+    break_ends_at: "12:30",
+    staff_id: operator,
+  });
+  await changeOperatorState(db, "platform-owner", club, {
+    state: "trial",
+    reason: "Synthetic onboarding setup is ready for member acceptance.",
+  });
   const m = await issueInvite(
     db,
     operator,

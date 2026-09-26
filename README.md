@@ -67,3 +67,5 @@ Managers and delegated staff administrators can also issue a hashed, single-use 
 The platform console now reports five evidence-based setup checks for every operator: manager access, an active venue, an active grooming service, an active station and a published shift with a qualified active groomer. “Demo ready” means those five synthetic walkthrough conditions pass. It does not mean the operator is approved for live use, connected to a production payment provider or ready for an app-store release.
 
 Automated acceptance provisions two differently branded operators through secure invitations, then gives each a distinct service, station and qualified rota using the same application build. No manual SQL or source-code fork is used.
+
+Platform owners can move operators through onboarding, trial, active, restricted and closed states using audited transition rules. Restriction preserves existing service obligations while blocking new invitations; closure removes ordinary tenant and public-profile access without deleting records. See [operator lifecycle](docs/OPERATOR_LIFECYCLE.md).

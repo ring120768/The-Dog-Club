@@ -170,3 +170,11 @@ Branch `codex/operator-readiness`, stacked on `codex/staff-invitations`. The pla
 Validation: TypeScript and all 91 tests pass. New acceptance coverage provisions two differently branded synthetic operators through secure invitations and configures a distinct service, station and qualified rota for each through the same application service layer—no SQL or source-code fork. A tenant member cannot read readiness. Local browser acceptance shows Coast at 1/5 and both Willow and Pavilion Pooch at 5/5, then verifies the complete Willow checklist. Production schema, data and services remain untouched.
 
 Next: implement trial, onboarding, active, restricted and closed operator lifecycle states with explicit access/export behaviour before describing WL-06 as complete. Rehearse the full stacked migration sequence in non-production PostgreSQL before any live rollout.
+
+## Operator lifecycle checkpoint — 26/09/2026
+
+Branch `codex/operator-lifecycle`, stacked on `codex/operator-readiness`. Adds onboarding, trial, active, restricted and closed operator states with server-controlled, audited transitions. Trial and active require the five operator-readiness checks; active also requires an explicit external production/payments/support/operations review acknowledgement. Restricted operators retain existing access so customer obligations continue, while new member and staff invitations are blocked. Closed removes ordinary tenant and public-profile access without deleting memberships, bookings, subscriptions or payment history, and cannot be silently reopened.
+
+Validation: TypeScript and all 95 tests pass. Four lifecycle tests cover onboarding access, readiness and external activation gates, platform-only audit history, restricted growth with retained records, closure, direct profile-write denial and irreversible closure. Local browser acceptance shows Willow’s Trial controls and rejects Coast activation at 1/5 readiness. The client/server lifecycle contract is split so no database module reaches the browser bundle. Production remains untouched.
+
+Next: implement a permissioned per-operator export plus tested restore/offboarding procedure, then rehearse the full migration stack in non-production PostgreSQL before any live rollout.

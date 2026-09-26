@@ -7,13 +7,19 @@ import { paymentAccountFor } from "@/lib/stripe-memberships";
 import { BrandForm } from "@/components/brand-form";
 import { StripeAccountForm } from "@/components/stripe-account-form";
 import { operatorReadinessForPlatform } from "@/lib/operator-readiness";
+import { operatorLifecycleForPlatform } from "@/lib/operator-lifecycle";
+import { OperatorLifecycleForm } from "@/components/operator-lifecycle-form";
 
 export default async function Operator({
   params,
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ saved?: string; created?: string }>;
+  searchParams: Promise<{
+    saved?: string;
+    created?: string;
+    lifecycle?: string;
+  }>;
 }) {
   const { slug } = await params;
   const account = await requireAccount();
@@ -21,23 +27,26 @@ export default async function Operator({
   if (!(await isPlatformOwner(db, account.id))) notFound();
   const club = await editableClub(db, account.id, slug);
   if (!club) notFound();
-  const [query, paymentAccount, readiness] = await Promise.all([
+  const [query, paymentAccount, readiness, lifecycle] = await Promise.all([
     searchParams,
     paymentAccountFor(db, club.id),
     operatorReadinessForPlatform(db, account.id, [club.id]).then(
       (items) => items[0],
     ),
+    operatorLifecycleForPlatform(db, account.id, club.id),
   ]);
   return (
     <main className="platform-main">
       <Link className="inline-link" href="/platform">
         ← All clubs
       </Link>
-      {(query.saved || query.created) && (
+      {(query.saved || query.created || query.lifecycle) && (
         <p className="success" role="status">
-          {query.created
-            ? "Club created and manager assigned. Their club access is ready."
-            : "Club branding saved."}
+          {query.lifecycle
+            ? "Operator lifecycle updated and recorded."
+            : query.created
+              ? "Club created and manager assigned. Their club access is ready."
+              : "Club branding saved."}
         </p>
       )}
       <div className="platform-heading">
@@ -83,6 +92,12 @@ export default async function Operator({
           approval are separate gates.
         </p>
       </section>
+      <OperatorLifecycleForm
+        club={club.id}
+        slug={club.slug}
+        current={club.operator_state}
+        events={lifecycle}
+      />
       <BrandForm club={club} platform />
       <StripeAccountForm club={club.id} slug={slug} current={paymentAccount} />
     </main>

@@ -109,6 +109,31 @@ small {
   background: #dfece4;
   color: #235448;
 }
+.operator-state {
+  display: inline-flex;
+  margin: 10px 6px 0 0;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.state-active {
+  border-color: #9ac1a8;
+  color: #235448;
+}
+.state-restricted,
+.lifecycle-warning {
+  border-color: #d2a43a;
+  color: #765b19;
+}
+.state-closed {
+  border-color: #b98686;
+  color: #7a3434;
+}
 .readiness-panel {
   margin: 28px 0;
   padding: 26px;
@@ -163,6 +188,61 @@ small {
 }
 .readiness-note {
   margin-top: 16px;
+}
+.lifecycle-panel > p {
+  margin-top: 10px;
+}
+.lifecycle-panel > small {
+  margin-top: 4px;
+}
+.lifecycle-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.7fr) minmax(260px, 1.3fr);
+  gap: 16px;
+  align-items: end;
+  margin-top: 22px;
+}
+.lifecycle-form label:not(.checkbox-row) {
+  display: grid;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.lifecycle-form .checkbox-row,
+.lifecycle-form .error,
+.lifecycle-form .button {
+  grid-column: 1/-1;
+}
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 12px;
+}
+.checkbox-row input {
+  margin-top: 4px;
+}
+.lifecycle-form .button {
+  justify-self: start;
+}
+.lifecycle-history {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.lifecycle-history h3 {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+.lifecycle-history p {
+  display: grid;
+  gap: 2px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.lifecycle-history span {
+  color: var(--muted);
 }
 .button {
   display: inline-flex;

@@ -14,7 +14,10 @@ export default async function PublicProfile({
   const { slug, id } = await params;
   const db = await database();
   const club = (
-    await db.query<Club>("SELECT * FROM clubs WHERE slug=$1", [slug])
+    await db.query<Club>(
+      "SELECT * FROM clubs WHERE slug=$1 AND operator_state<>'closed'",
+      [slug],
+    )
   ).rows[0];
   if (!club) notFound();
   const dog = await publicDog(db, club.id, id);
