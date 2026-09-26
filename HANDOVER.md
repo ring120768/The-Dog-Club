@@ -288,3 +288,11 @@ The bearer-authorised PATCH route locks the existing appointment, rechecks owner
 Validation: TypeScript and all 119 isolated tests pass. New domain coverage proves a successful move retains the booking identity and commercial terms, does not debit another credit, writes the reschedule event, rejects another household and preserves the original appointment when replacement capacity cannot be secured. Capacitor sync, Android debug assembly with Java 21 and the unsigned iOS simulator build pass. Production remains untouched.
 
 Next: complete the iOS/Android visual journey against reviewed HTTPS non-production infrastructure and resolve whether service payments remain pay-at-club or use a reviewed Stripe flow. Secure Keychain/Keystore sessions, device revocation, signing and store distribution remain separate release gates.
+
+## Grooming service-payment design checkpoint — 26/09/2026
+
+Branch `codex/mobile-service-checkout`, stacked on `codex/mobile-booking-reschedule`. The product decision is now explicit: non-credit grooming bookings use Stripe-hosted one-time Checkout through the club's configured connected account. The implementation contract is in `docs/SERVICE_PAYMENTS.md`.
+
+The design holds capacity for 30 minutes in an `awaiting_payment` booking, confirms only from a signature-verified paid webhook and releases failed or expired holds. Browser return never fulfils a booking. Stable idempotency, duplicate/out-of-order webhook handling, late-payment reconciliation, tenant separation and immutable price/terms snapshots are required. Dynamic payment methods remain enabled; Stripe Tax and automatic refunds stay off until the operator confirms VAT and cancellation/refund policy.
+
+This checkpoint changes documentation only. No payment schema, Stripe session, provider configuration or production service was created. Next: implement the schema and domain lifecycle with isolated gateway tests before exposing Checkout in the mobile client.
