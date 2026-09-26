@@ -22,6 +22,7 @@ export type MobileMemberHome = {
     startsAt: string;
     amountDuePence: number;
     groomingCreditsApplied: number;
+    paymentState: "membership_credit" | "paid" | "due";
   }[];
 };
 
@@ -67,9 +68,19 @@ export async function mobileMemberHomeFor(
         starts_at: string;
         amount_due_pence_snapshot: number;
         grooming_credits_applied: number;
+        payment_state: "membership_credit" | "paid" | "due";
       }>(
         `SELECT b.id,b.dog_id,b.service_id,d.name AS dog_name,s.name AS service_name,b.starts_at,
-         b.amount_due_pence_snapshot,b.grooming_credits_applied
+         b.amount_due_pence_snapshot,b.grooming_credits_applied,
+         CASE
+           WHEN b.grooming_credits_applied>0 THEN 'membership_credit'
+           WHEN EXISTS(
+             SELECT 1 FROM booking_events be
+             WHERE be.club_id=b.club_id AND be.booking_id=b.id
+             AND be.action='booking.payment_confirmed'
+           ) THEN 'paid'
+           ELSE 'due'
+         END AS payment_state
          FROM grooming_bookings b
          JOIN dogs d ON d.club_id=b.club_id AND d.id=b.dog_id
          JOIN grooming_services s ON s.club_id=b.club_id AND s.id=b.service_id
@@ -114,6 +125,7 @@ export async function mobileMemberHomeFor(
         startsAt: booking.starts_at,
         amountDuePence: booking.amount_due_pence_snapshot,
         groomingCreditsApplied: booking.grooming_credits_applied,
+        paymentState: booking.payment_state,
       })),
     };
   });

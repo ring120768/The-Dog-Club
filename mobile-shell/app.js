@@ -143,9 +143,12 @@
       const title = document.createElement("strong");
       title.textContent = `${booking.dogName} · ${booking.serviceName}`;
       const detail = document.createElement("p");
-      const payment = booking.groomingCreditsApplied
-        ? `${booking.groomingCreditsApplied} membership credit${booking.groomingCreditsApplied === 1 ? "" : "s"}`
-        : `£${(booking.amountDuePence / 100).toFixed(2)} due`;
+      const payment =
+        booking.paymentState === "membership_credit"
+          ? `${booking.groomingCreditsApplied} membership credit${booking.groomingCreditsApplied === 1 ? "" : "s"}`
+          : booking.paymentState === "paid"
+            ? `£${(booking.amountDuePence / 100).toFixed(2)} paid`
+            : `£${(booking.amountDuePence / 100).toFixed(2)} due`;
       detail.textContent = `${formatDateTime(booking.startsAt)} · ${payment}`;
       const actions = document.createElement("div");
       actions.className = "booking-actions";

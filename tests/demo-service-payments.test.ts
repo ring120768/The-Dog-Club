@@ -12,6 +12,7 @@ import {
   ensureDemoServicePaymentAccount,
 } from "../src/lib/demo-service-payments";
 import { prepareServiceCheckout } from "../src/lib/service-payments";
+import { mobileMemberHomeFor } from "../src/lib/mobile-home";
 
 const demoEnvironment = {
   DOGCLUB_LOCAL_DEMO: "1",
@@ -106,6 +107,12 @@ test("local demo paywall confirms through the service-payment lifecycle", async 
       )
     ).rows[0],
     { status: "captured", amount_pence: 7250 },
+  );
+  assert.equal(
+    (await mobileMemberHomeFor(db, "alice", club)).upcomingBookings.find(
+      (booking) => booking.id === checkout.bookingId,
+    )?.paymentState,
+    "paid",
   );
 });
 

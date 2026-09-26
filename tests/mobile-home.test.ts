@@ -95,8 +95,17 @@ test("mobile member home exposes only the actor's commercial summary", async () 
       service: booking.serviceName,
       credits: booking.groomingCreditsApplied,
       due: booking.amountDuePence,
+      payment: booking.paymentState,
     })),
-    [{ dog: "Bertie", service: "Mobile groom", credits: 1, due: 0 }],
+    [
+      {
+        dog: "Bertie",
+        service: "Mobile groom",
+        credits: 1,
+        due: 0,
+        payment: "membership_credit",
+      },
+    ],
   );
 
   assert.deepEqual(await mobileMemberHomeFor(db, "bea", club), {

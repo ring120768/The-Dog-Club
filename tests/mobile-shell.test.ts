@@ -44,6 +44,8 @@ test("mobile grooming flow preserves credits and hands card payments to Stripe",
   assert.match(script, /Plugins\?\.Browser/);
   assert.match(script, /browserFinished/);
   assert.match(script, /held for 30 minutes/);
+  assert.match(script, /paymentState === "paid"/);
+  assert.match(script, /\.toFixed\(2\)} paid/);
   assert.match(shell, /id="booking-payment-refresh"/);
   assert.doesNotMatch(shell, /card number|payment details/i);
 });
