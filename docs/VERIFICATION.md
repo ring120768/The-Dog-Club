@@ -49,3 +49,13 @@ TypeScript and all 98 embedded-database tests pass. The new archive suite proves
 All 18 migrations then applied to a clean disposable Supabase PostgreSQL 17 container as the schema-owning `supabase_admin` role. The resulting 52-table schema passed all 98 tests through the rollback-only shared-PostgreSQL harness. Effective `club_app` grants were inspected, and final counts confirmed that no synthetic clubs or export events remained. See [the rehearsal record](NON_PRODUCTION_POSTGRES_REHEARSAL.md).
 
 Local browser acceptance confirms Willow renders as Trial with the permitted transition form and Coast cannot be activated while its readiness score is 1/5. The failed activation leaves Coast in Trial and displays the readiness error. Production schema, data and services remain untouched.
+
+# iOS guided-demo rehearsal — 26/09/2026
+
+The unsigned Capacitor build was installed on the named `Dog Club iPhone` simulator running iOS 26.5 and exercised against the local synthetic server. Alice signed in, selected Willow, saw the active Care Demo membership and dog profiles, selected Bertie and the live 09:15 Member full groom on 27/09/2026, chose card payment instead of a membership credit, accepted the cancellation terms and created the 30-minute payment hold.
+
+Capacitor Browser opened the local payment wall showing Bertie, the service, London appointment time and £65 total together with the explicit `DEMONSTRATION · NO MONEY OR CARD DATA` notice. Completing the simulation displayed a confirmed checkout. Closing the browser returned to the booking form; Refresh payment status then returned the member home and displayed the confirmed appointment.
+
+The first pass rendered the confirmed booking as `£65.00 due`. The corrected home projection distinguishes membership credit, captured payment and amount still due without exposing the protected payment ledger to the restricted club role. A rebuilt and reinstalled iOS app visibly rendered the same booking as `£65.00 paid`.
+
+Automated verification passes: `npm run typecheck`, all 133 tests, `npm run build`, Capacitor sync, clean Android debug assembly with Java 21 and unsigned iOS simulator compilation. Android assembly required the pre-existing untracked duplicate resource `config 2.xml` to be moved out of the resource folder for the build; it was restored automatically. Android interactive acceptance remains outstanding because no Android Virtual Device or emulator image is installed. No production service, live payment or card data was involved.
