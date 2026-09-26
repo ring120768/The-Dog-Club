@@ -218,3 +218,13 @@ The shared shell now opens each visible dog into a profile with photograph or br
 Validation: TypeScript and all 105 isolated tests pass; focused response coverage verifies the mobile photo content type, cross-origin policy, no-store policy, exact bytes and unavailable response. A live localhost probe returned Bertie's permitted profile and rejected Coast substitution with 404. Capacitor synchronisation, Android debug assembly with Java 21 and unsigned iOS simulator build all pass. The local seed has no Bertie photograph, while existing image-policy tests cover authorised bytes and immediate revocation. Production remains untouched.
 
 Next: add authorised profile editing and photo upload/replace/remove. Do not add camera or library capabilities until iOS usage descriptions, Android permissions, size/type handling and denial/retry behaviour are reviewed together.
+
+## Mobile dog-profile editing checkpoint — 26/09/2026
+
+Branch `codex/mobile-dog-edit`, stacked on `codex/mobile-dog-profile`. Owners and household adults with delegated dog-care permission can edit a dog's name, breed, biography, profile colour and private/members/public audience from the shared mobile shell. The PATCH route re-checks the live bearer session, club lifecycle, current dog visibility and `can_manage` permission before calling the same validated, audited `saveDog` service used by the web app. Another member, a booking-only household adult or a substituted tenant receives no edit control and cannot write through the route.
+
+The editor enforces the same server-side length and enum schema as the web app. Saving refreshes the detail view and returning to the club refreshes the list, so an audience or profile change is not left stale in memory. Mobile CORS now explicitly permits PATCH while retaining exact-origin matching.
+
+Validation: TypeScript and all 105 isolated tests pass, including explicit PATCH preflight coverage and the existing ownership, household-permission, tenant-isolation, validation and audit tests exercised by the shared service. Capacitor sync and both native debug builds pass. Production remains untouched.
+
+Next: design the photo upload/replace/remove boundary with iOS library/camera usage descriptions, Android permission behaviour, the existing 5 MB/20-megapixel normalisation limits and denial/retry UX before adding native media access.

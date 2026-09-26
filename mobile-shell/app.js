@@ -1,8 +1,21 @@
 (() => {
   "use strict";
-  const state = { token: "", server: "", clubs: [], club: null, photoUrl: "" };
+  const state = {
+    token: "",
+    server: "",
+    clubs: [],
+    club: null,
+    dog: null,
+    photoUrl: "",
+  };
   const byId = (id) => document.getElementById(id);
-  const views = ["login-view", "club-view", "dog-view", "profile-view"];
+  const views = [
+    "login-view",
+    "club-view",
+    "dog-view",
+    "profile-view",
+    "edit-view",
+  ];
 
   function platform() {
     const value = window.Capacitor?.getPlatform?.();
@@ -134,6 +147,7 @@
         `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/dogs/${encodeURIComponent(dogId)}`,
       );
       const dog = payload.dog;
+      state.dog = dog;
       byId("profile-name").textContent = dog.name;
       byId("profile-breed").textContent = dog.breed;
       byId("profile-bio").textContent = dog.bio;
@@ -144,6 +158,7 @@
             ? "Club members"
             : "Private profile";
       byId("profile-owner").classList.toggle("hidden", !dog.canManage);
+      byId("edit-profile").classList.toggle("hidden", !dog.canManage);
       const image = byId("profile-photo");
       const fallback = byId("profile-avatar");
       fallback.className = `profile-photo avatar ${dog.avatar}`;
@@ -167,6 +182,7 @@
     state.token = "";
     state.clubs = [];
     state.club = null;
+    state.dog = null;
     clearPhoto();
     show("login-view");
     byId("password").value = "";
@@ -207,9 +223,47 @@
     }
   });
   byId("back").addEventListener("click", () => show("club-view"));
-  byId("profile-back").addEventListener("click", () => {
+  byId("profile-back").addEventListener("click", async () => {
     clearPhoto();
-    show("dog-view");
+    state.dog = null;
+    await openClub(state.club);
+  });
+  byId("edit-profile").addEventListener("click", () => {
+    byId("edit-name").value = state.dog.name;
+    byId("edit-breed").value = state.dog.breed;
+    byId("edit-bio").value = state.dog.bio;
+    byId("edit-avatar").value = state.dog.avatar;
+    byId("edit-audience").value = state.dog.audience;
+    byId("edit-message").textContent = "";
+    show("edit-view");
+  });
+  byId("edit-back").addEventListener("click", () => show("profile-view"));
+  byId("edit-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const message = byId("edit-message");
+    message.textContent = "";
+    setBusy(form, true);
+    try {
+      await request(
+        `/api/mobile/clubs/${encodeURIComponent(state.club.slug)}/dogs/${encodeURIComponent(state.dog.id)}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            name: byId("edit-name").value,
+            breed: byId("edit-breed").value,
+            bio: byId("edit-bio").value,
+            avatar: byId("edit-avatar").value,
+            audience: byId("edit-audience").value,
+          }),
+        },
+      );
+      await openDog(state.dog.id);
+    } catch (error) {
+      message.textContent = error.message;
+    } finally {
+      setBusy(form, false);
+    }
   });
   byId("sign-out").addEventListener("click", () => logout());
   byId("dog-sign-out").addEventListener("click", () => logout());

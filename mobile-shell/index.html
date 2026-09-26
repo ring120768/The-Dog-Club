@@ -87,6 +87,20 @@
         color: #173c34;
         font: inherit;
       }
+      textarea,
+      select {
+        width: 100%;
+        padding: 14px 15px;
+        border: 1px solid #b7c5bf;
+        border-radius: 14px;
+        background: white;
+        color: #173c34;
+        font: inherit;
+      }
+      textarea {
+        min-height: 110px;
+        resize: vertical;
+      }
       input:focus {
         outline: 3px solid rgb(35 84 72 / 18%);
         border-color: #235448;
@@ -314,8 +328,42 @@
           <span id="profile-breed" class="muted"></span>
           <p id="profile-bio"></p>
           <span id="profile-owner" class="pill hidden">Your dog</span>
+          <button id="edit-profile" class="primary hidden" type="button">
+            Edit profile
+          </button>
         </div>
         <p id="profile-message" class="message" role="alert"></p>
+      </section>
+      <section id="edit-view" class="card hidden">
+        <div class="topline">
+          <button id="edit-back" class="secondary" type="button">
+            Profile
+          </button>
+          <span class="eyebrow">Edit your dog</span>
+        </div>
+        <form id="edit-form">
+          <label>Name<input id="edit-name" maxlength="60" required /></label>
+          <label>Breed<input id="edit-breed" maxlength="80" /></label>
+          <label
+            >Biography<textarea id="edit-bio" maxlength="400"></textarea>
+          </label>
+          <label
+            >Profile colour<select id="edit-avatar">
+              <option value="sand">Sand</option>
+              <option value="sage">Sage</option>
+              <option value="rose">Rose</option>
+            </select></label
+          >
+          <label
+            >Who can see this?<select id="edit-audience">
+              <option value="private">Private</option>
+              <option value="members">Club members</option>
+              <option value="public">Public</option>
+            </select></label
+          >
+          <button class="primary" type="submit">Save profile</button>
+        </form>
+        <p id="edit-message" class="message" role="alert"></p>
       </section>
     </main>
     <script src="app.js"></script>
