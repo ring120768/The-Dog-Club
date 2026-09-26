@@ -1,5 +1,13 @@
 # Foundation verification — 25/09/2026
 
+## Community discovery and safety — 26/09/2026
+
+TypeScript, the Next.js production build and all 142 isolated tests pass. The four focused community checks cover trimmed case-insensitive dog-name search, symmetric account blocking inside the member directory, continued anonymous access to an otherwise public link, tenant-scoped reporting, manager-only review and immediate hide/restore enforcement across member, public and photo projections.
+
+Local browser acceptance used synthetic accounts only. Alice searched for `mAb`, received Mabel as the single result and submitted a profile report. The Willow manager saw the report and supplied outcome in the new moderation queue, hid the profile, then restored it with an audit reason. The restored history displayed Mabel as visible. At 390 × 844 the moderation page had no document-level horizontal overflow. The browser reported no console errors.
+
+The migration uses a separate manager-controlled hide-marker table; it does not grant managers update authority over member-owned dog fields. Production, Supabase and Neon were not changed. Non-production PostgreSQL rehearsal, paid-membership expiry, guidelines, moderation response ownership, retention, gallery lifecycle and account deletion remain required before a real community pilot.
+
 ## Public mobile staging — 26/09/2026
 
 The stable `codex/mobile-https-staging` Vercel branch domain has an explicitly authorised Deployment Protection Exception and returns the synthetic login without Vercel authentication. The secret-safe staging verifier signed the synthetic Willow member in through the mobile API, confirmed one club membership and the current device session, and revoked the session during cleanup.

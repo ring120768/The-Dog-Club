@@ -539,6 +539,46 @@ small {
   color: var(--muted);
   max-width: 320px;
 }
+.community-search {
+  margin-top: 22px;
+}
+.community-search label,
+.community-safety label,
+.moderation-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 600;
+}
+.community-search > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-top: 7px;
+}
+.community-search .button {
+  border: 0;
+}
+.community-result-count a {
+  text-decoration: underline;
+}
+.blocked-households {
+  margin-top: 20px;
+  font-size: 12px;
+}
+.blocked-households summary,
+.community-safety summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.blocked-households form {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
 .neighbours {
   display: flex;
   gap: 15px;
@@ -565,6 +605,67 @@ small {
 }
 .neighbours p {
   font-size: 11px;
+}
+.community-safety {
+  grid-column: 2;
+  margin-top: 6px;
+  font-size: 11px;
+}
+.community-safety form {
+  display: grid;
+  gap: 9px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.community-safety small {
+  color: var(--muted);
+  line-height: 1.45;
+}
+.community-safety .text-button,
+.blocked-households .text-button,
+.restore-form .text-button {
+  width: fit-content;
+}
+.danger-text {
+  color: #8b3528;
+}
+.moderation-section {
+  margin-top: 34px;
+}
+.moderation-list {
+  display: grid;
+  gap: 18px;
+}
+.moderation-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
+  gap: 28px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.moderation-card h3 {
+  margin: 7px 0 10px;
+}
+.moderation-card p {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.moderation-form {
+  display: grid;
+  gap: 12px;
+}
+.moderation-form .button {
+  border: 0;
+  justify-content: center;
+}
+.restore-form {
+  display: grid;
+  gap: 7px;
+  min-width: 190px;
 }
 .coming-next {
   border: 1px dashed #d1d8ca;
@@ -1743,6 +1844,9 @@ th {
   }
   .neighbours article {
     max-width: 100%;
+  }
+  .moderation-card {
+    grid-template-columns: 1fr;
   }
   .booking-search,
   .slot-grid,

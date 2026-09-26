@@ -2,6 +2,16 @@
 
 Updated 26/09/2026
 
+## Community discovery and safety checkpoint — 26/09/2026
+
+Branch `codex/community-safety`, stacked on `codex/mobile-https-staging`. Eligible members can now search the row-level-security-filtered community directory by dog name. Each shared dog card exposes a bounded profile/current-photo report and an account-level block with the required warning that an anonymous public link cannot be blocked. Members can review and remove their own blocks without receiving household contact details.
+
+Managers have a new `/club/[slug]/moderation` queue. They can resolve or dismiss a report, temporarily hide the reported dog profile, record an outcome, restore the profile with a reason and retain an append-only community event trail. Hiding uses a separate `community_profile_hides` marker table; managers do not receive update access to member-owned dog fields. A hidden profile disappears from member discovery, public profile and protected photo reads while remaining available to its owner and club managers for correction and review.
+
+Validation: TypeScript and the Next.js production build pass; all 142 isolated tests pass. Four focused tests cover case-insensitive name-only search, symmetric member-directory blocking with the explicit public-link boundary, tenant/manager report access and manager hide/restore visibility. A local synthetic browser journey searched for Mabel, submitted a report as Alice, displayed it in the manager queue, hid the profile, restored it and confirmed the audit result. A 390×844 viewport produced no document-level horizontal overflow. Production, Supabase and Neon were not changed; the new migration remains unapplied outside local disposable/demo databases.
+
+Before a real community pilot: rehearse the migration in non-production PostgreSQL, assign a moderation owner and response expectations, approve community guidelines and retention, enforce paid-membership expiry, and complete gallery/account-deletion lifecycle behaviour.
+
 ## Commercial pricing proposal — 26/09/2026
 
 `docs/COMMERCIAL_PRICING.md` records the initial UK sales hypothesis: £349 per location/month plus £2,500 onboarding, and a limited Founding Partner offer of £1,500 onboarding plus £249/month for the first 12 months. Managed operator-branded iOS/Android apps, additional locations, dedicated infrastructure, usage charges and bespoke work are separate. The proposal is not an approved quote; it includes market evidence and explicit validation gates before public pricing.
